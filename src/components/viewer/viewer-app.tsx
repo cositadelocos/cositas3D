@@ -107,7 +107,7 @@ export function ViewerApp() {
         <div className="relative z-10 flex w-full flex-col gap-3 px-4 pb-8 sm:px-6 lg:h-full lg:w-96 lg:overflow-y-auto lg:px-6 lg:pt-20 lg:pb-8">
           <ControlPanel />
           <p className="text-center text-xs text-subtle lg:hidden">
-            Arrastra el modelo para orbitar. Suelta un GLB para cargarlo.
+            Arrastra el modelo para orbitar. Suelta un GLB o FBX para cargarlo.
           </p>
         </div>
       </div>
@@ -116,7 +116,7 @@ export function ViewerApp() {
         <div className="bg-background/80 pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
           <div className="rounded-xl bg-card px-8 py-6 text-center shadow-border">
             <p className="font-display text-xl">Suelta el modelo</p>
-            <p className="mt-1 text-sm text-muted-foreground">GLB, glTF, OBJ o STL</p>
+            <p className="mt-1 text-sm text-muted-foreground">GLB, FBX, OBJ, STL o 3DS</p>
           </div>
         </div>
       ) : null}

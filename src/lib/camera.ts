@@ -28,12 +28,22 @@ export const VIEW_DIRS: Record<ViewFace, readonly [number, number, number]> = {
   bottom: [0, -1, 0.04],
 };
 
-export function zoomToDistance(zoom: number) {
-  const t = Math.min(100, Math.max(0, zoom)) / 100;
-  return CAMERA.maxDistance - t * (CAMERA.maxDistance - CAMERA.minDistance);
+export function viewSpan(frame = 100) {
+  const k = Math.min(180, Math.max(40, frame)) / 100;
+  return {
+    min: CAMERA.minDistance * k,
+    max: CAMERA.maxDistance * k,
+  };
 }
 
-export function distanceToZoom(distance: number) {
-  const span = CAMERA.maxDistance - CAMERA.minDistance;
-  return Math.min(100, Math.max(0, ((CAMERA.maxDistance - distance) / span) * 100));
+export function zoomToDistance(zoom: number, frame = 100) {
+  const { min, max } = viewSpan(frame);
+  const t = Math.min(100, Math.max(0, zoom)) / 100;
+  return max - t * (max - min);
+}
+
+export function distanceToZoom(distance: number, frame = 100) {
+  const { min, max } = viewSpan(frame);
+  const span = max - min;
+  return Math.min(100, Math.max(0, ((max - distance) / span) * 100));
 }

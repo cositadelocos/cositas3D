@@ -16,6 +16,11 @@ export type LightPresetId = keyof typeof LIGHT_PRESETS;
 export type ModelKind = "demo" | "file";
 export type ModelStatus = "idle" | "loading" | "ready" | "error";
 export type AnimMode = "none" | "turntable" | "oscillate" | "hopspin";
+export type ExportFormat = "glb" | "gltf" | "stl" | "obj";
+export type CaptureFormat = "png" | "jpeg";
+export type CaptureSize = "vista" | "2k" | "4k";
+export type SourceSize = { x: number; y: number; z: number };
+export type ExplodeAxis = "x" | "y" | "z";
 
 export const ANIM_MODES: { id: AnimMode; label: string }[] = [
   { id: "none", label: "Quieto" },
@@ -26,6 +31,19 @@ export const ANIM_MODES: { id: AnimMode; label: string }[] = [
 
 export const DEFAULT_ZOOM = 56;
 export const DEFAULT_MESH_COLOR = "#dce1e8";
+
+export const EXPORT_FORMATS: { id: ExportFormat; label: string; hint: string }[] = [
+  { id: "glb", label: "GLB", hint: "Modelo con materiales. El más útil." },
+  { id: "gltf", label: "glTF", hint: "El mismo estándar, en JSON." },
+  { id: "stl", label: "STL", hint: "Solo malla, para impresión." },
+  { id: "obj", label: "OBJ", hint: "Malla clásica, sin texturas." },
+];
+
+export const CAPTURE_SIZES: { id: CaptureSize; label: string }[] = [
+  { id: "vista", label: "Vista" },
+  { id: "2k", label: "2K" },
+  { id: "4k", label: "4K" },
+];
 
 function revokeUrls(url: string | null, extras: Record<string, string> | null) {
   if (url) URL.revokeObjectURL(url);
@@ -49,6 +67,13 @@ type ViewerState = {
   resetToken: number;
   captureToken: number;
   capturedAt: number;
+  captureFormat: CaptureFormat;
+  captureSize: CaptureSize;
+  explode: number;
+  explodeAxes: Record<ExplodeAxis, boolean>;
+  exportToken: number;
+  exportFormat: ExportFormat;
+  exportNote: string | null;
   modelKind: ModelKind;
   modelName: string;
   modelFormat: ModelFormat | null;
@@ -56,6 +81,8 @@ type ViewerState = {
   modelExtras: Record<string, string> | null;
   modelStatus: ModelStatus;
   modelError: string | null;
+  sourceSize: SourceSize | null;
+  frame: number;
   parts: ModelPart[];
   hiddenPartIds: string[];
   textures: TextureAsset[];
@@ -73,8 +100,16 @@ type ViewerState = {
   resetCamera: () => void;
   requestCapture: () => void;
   markCaptured: () => void;
+  setCaptureFormat: (format: CaptureFormat) => void;
+  setCaptureSize: (size: CaptureSize) => void;
+  setExplode: (value: number) => void;
+  toggleExplodeAxis: (axis: ExplodeAxis) => void;
+  requestExport: (format: ExportFormat) => void;
+  setExportNote: (note: string | null) => void;
   loadModelFromFiles: (files: File[]) => void;
   setModelStatus: (status: ModelStatus, error?: string | null) => void;
+  setSourceSize: (size: SourceSize | null) => void;
+  setFrame: (value: number) => void;
   setInspect: (report: { parts: ModelPart[]; textures: TextureAsset[]; materials: MaterialAsset[] }) => void;
   togglePart: (id: string) => void;
   setAllPartsVisible: (visible: boolean) => void;
@@ -98,6 +133,13 @@ export const useViewer = create<ViewerState>((set, get) => ({
   resetToken: 0,
   captureToken: 0,
   capturedAt: 0,
+  captureFormat: "png",
+  captureSize: "2k",
+  explode: 0,
+  explodeAxes: { x: true, y: true, z: true },
+  exportToken: 0,
+  exportFormat: "glb",
+  exportNote: null,
   modelKind: "demo",
   modelName: DEMO_OBJECT_NAME,
   modelFormat: null,
@@ -105,6 +147,8 @@ export const useViewer = create<ViewerState>((set, get) => ({
   modelExtras: null,
   modelStatus: "idle",
   modelError: null,
+  sourceSize: null,
+  frame: 100,
   parts: [],
   hiddenPartIds: [],
   textures: [],
@@ -133,6 +177,20 @@ export const useViewer = create<ViewerState>((set, get) => ({
     })),
   requestCapture: () => set((state) => ({ captureToken: state.captureToken + 1 })),
   markCaptured: () => set({ capturedAt: Date.now() }),
+  setCaptureFormat: (captureFormat) => set({ captureFormat }),
+  setCaptureSize: (captureSize) => set({ captureSize }),
+  setExplode: (explode) => set({ explode }),
+  toggleExplodeAxis: (axis) =>
+    set((state) => ({
+      explodeAxes: { ...state.explodeAxes, [axis]: !state.explodeAxes[axis] },
+    })),
+  requestExport: (exportFormat) =>
+    set((state) => ({
+      exportFormat,
+      exportNote: "Exportando…",
+      exportToken: state.exportToken + 1,
+    })),
+  setExportNote: (exportNote) => set({ exportNote }),
   loadModelFromFiles: (files) => {
     const classified = classifyModelFiles(files);
     if (!classified.ok) {
@@ -160,10 +218,15 @@ export const useViewer = create<ViewerState>((set, get) => ({
       finishId: "original",
       shadeMode: "material",
       hiddenPartIds: [],
+      explode: 0,
+      frame: 100,
+      sourceSize: null,
       ...emptyInspect,
     });
   },
   setModelStatus: (modelStatus, modelError = null) => set({ modelStatus, modelError }),
+  setSourceSize: (sourceSize) => set({ sourceSize }),
+  setFrame: (frame) => set({ frame }),
   setInspect: ({ parts, textures, materials }) => set({ parts, textures, materials }),
   togglePart: (id) =>
     set((state) => ({
@@ -190,6 +253,9 @@ export const useViewer = create<ViewerState>((set, get) => ({
       zoom: DEFAULT_ZOOM,
       viewFace: "orbit",
       hiddenPartIds: [],
+      explode: 0,
+      frame: 100,
+      sourceSize: null,
       ...emptyInspect,
     });
   },

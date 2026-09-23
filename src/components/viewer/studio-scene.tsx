@@ -1,6 +1,6 @@
 import { ContactShadows } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useEffect, useMemo, type RefObject } from "react";
+import { useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { useViewer, type LightPresetId } from "@/lib/viewer-store";
@@ -44,6 +44,17 @@ function StudioEnvironment({ intensity }: { intensity: number }) {
   return null;
 }
 
+function ViewFrame({ children }: { children: ReactNode }) {
+  const frame = useViewer((s) => s.frame);
+  const ref = useRef<THREE.Group>(null);
+
+  useEffect(() => {
+    ref.current?.scale.setScalar(frame / 100);
+  }, [frame]);
+
+  return <group ref={ref}>{children}</group>;
+}
+
 export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group | null> }) {
   const finishId = useViewer((s) => s.finishId);
   const intensity = useViewer((s) => s.intensity);
@@ -85,22 +96,28 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
           <LoadedModel url={modelUrl} format={modelFormat} extras={modelExtras} finishId={finishId} />
         </group>
       ) : (
-        <group ref={productRef} position={[0, 0.08, 0]}>
-          <HeadphoneModel finishId={finishId} />
+        <group ref={productRef}>
+          <ViewFrame>
+            <group position={[0, 0.08, 0]}>
+              <HeadphoneModel finishId={finishId} />
+            </group>
+          </ViewFrame>
         </group>
       )}
       <ShadeApplier rootRef={productRef} />
-      {shadeMode === "mesh" ? null : (
-        <ContactShadows position={[0, -0.5, 0]} opacity={0.45} scale={8} blur={2.8} far={3} color="#000000" />
-      )}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.502, 0]} receiveShadow>
-        <circleGeometry args={[11, 64]} />
-        <meshStandardMaterial color="#18181b" roughness={0.9} metalness={0.08} />
-      </mesh>
-      <mesh position={[0, 2.6, -6.5]} receiveShadow>
-        <planeGeometry args={[30, 16]} />
-        <meshStandardMaterial color="#141416" roughness={1} metalness={0} />
-      </mesh>
+      <group userData={{ studio: true }}>
+        {shadeMode === "mesh" ? null : (
+          <ContactShadows position={[0, -0.5, 0]} opacity={0.45} scale={8} blur={2.8} far={3} color="#000000" />
+        )}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.502, 0]} receiveShadow>
+          <circleGeometry args={[11, 64]} />
+          <meshStandardMaterial color="#18181b" roughness={0.9} metalness={0.08} />
+        </mesh>
+        <mesh position={[0, 2.6, -6.5]} receiveShadow>
+          <planeGeometry args={[30, 16]} />
+          <meshStandardMaterial color="#141416" roughness={1} metalness={0} />
+        </mesh>
+      </group>
     </>
   );
 }

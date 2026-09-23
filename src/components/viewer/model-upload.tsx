@@ -6,6 +6,13 @@ import { ACCEPT_ATTR, formatLabel } from "@/lib/model-files";
 import { cn } from "@/lib/utils";
 import { useViewer } from "@/lib/viewer-store";
 
+function fmt(value: number) {
+  if (!Number.isFinite(value)) return "—";
+  if (value >= 100) return value.toFixed(1);
+  if (value >= 10) return value.toFixed(2);
+  return value.toFixed(3);
+}
+
 export function ModelUpload() {
   const inputRef = useRef<HTMLInputElement>(null);
   const loadModelFromFiles = useViewer((s) => s.loadModelFromFiles);
@@ -15,6 +22,7 @@ export function ModelUpload() {
   const modelFormat = useViewer((s) => s.modelFormat);
   const modelStatus = useViewer((s) => s.modelStatus);
   const modelError = useViewer((s) => s.modelError);
+  const sourceSize = useViewer((s) => s.sourceSize);
 
   const onFiles = (list: FileList | File[] | null) => {
     if (!list || (Array.isArray(list) ? list.length === 0 : list.length === 0)) return;
@@ -57,15 +65,20 @@ export function ModelUpload() {
           {modelStatus === "loading" ? "Cargando…" : "Cargar modelo"}
         </span>
         <span className="text-xs text-subtle text-pretty">
-          Arrastra un archivo o pulsa para elegir. Recomendado:{" "}
-          <span className="text-muted-foreground">GLB</span>
+          Fusion 360 y 3ds Max: exporta{" "}
+          <span className="text-muted-foreground">GLB o FBX</span>
         </span>
       </button>
 
       <p className="text-xs text-subtle text-pretty">
-        Formatos: GLB, glTF, OBJ y STL. El GLB lleva malla y texturas en un solo archivo. Desde Blender:
-        File → Export → glTF 2.0 (.glb).
+        GLB, FBX, glTF, OBJ, STL y 3DS, siempre en milímetros. El archivo nativo no entra: ni .f3d, ni .max, ni STEP. En pantalla se
+        encuadra solo; la exportación sale en mm, sin ese encuadre.
       </p>
+      {sourceSize ? (
+        <p className="text-xs text-muted-foreground">
+          Medidas: {fmt(sourceSize.x)} × {fmt(sourceSize.y)} × {fmt(sourceSize.z)} mm
+        </p>
+      ) : null}
 
       {modelKind === "file" ? (
         <div className="flex items-center justify-between gap-3">

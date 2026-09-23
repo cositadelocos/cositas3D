@@ -2,8 +2,10 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
+import { TDSLoader } from "three/examples/jsm/loaders/TDSLoader.js";
 import { getFinish } from "@/lib/finishes";
 import type { ModelFormat } from "@/lib/model-files";
 import { useViewer } from "@/lib/viewer-store";
@@ -16,20 +18,35 @@ const _box = new THREE.Box3();
 const _size = new THREE.Vector3();
 const _center = new THREE.Vector3();
 
-function fitToStudio(root: THREE.Object3D) {
-  root.updateMatrixWorld(true);
-  _box.setFromObject(root);
-  if (_box.isEmpty()) return;
+function measureAndCenter(content: THREE.Object3D) {
+  content.updateMatrixWorld(true);
+  _box.setFromObject(content);
+  if (_box.isEmpty()) return null;
   _box.getSize(_size);
-  const maxDim = Math.max(_size.x, _size.y, _size.z, 1e-4);
-  root.scale.multiplyScalar(TARGET_SIZE / maxDim);
-  root.updateMatrixWorld(true);
-  _box.setFromObject(root);
   _box.getCenter(_center);
-  root.position.x -= _center.x;
-  root.position.z -= _center.z;
-  root.position.y -= _box.min.y;
-  root.position.y += FLOOR_Y;
+  content.position.x -= _center.x;
+  content.position.z -= _center.z;
+  content.position.y -= _box.min.y;
+  return { x: _size.x, y: _size.y, z: _size.z };
+}
+
+function applyViewFit(view: THREE.Object3D, size: { x: number; y: number; z: number }, frame: number) {
+  const maxDim = Math.max(size.x, size.y, size.z, 1e-4);
+  view.scale.setScalar((TARGET_SIZE / maxDim) * (frame / 100));
+  view.position.set(0, FLOOR_Y, 0);
+}
+
+function toMillimeters(root: THREE.Object3D, format: ModelFormat) {
+  let factor = 1;
+  if (format === "glb" || format === "gltf") {
+    factor = 1000;
+  } else if (format === "fbx") {
+    const raw = Number(root.userData.unitScaleFactor);
+    const unitScale = Number.isFinite(raw) && raw > 0 ? raw : 1;
+    factor = 10 / unitScale;
+  }
+  if (Math.abs(factor - 1) > 1e-8) root.scale.multiplyScalar(factor);
+  root.updateMatrixWorld(true);
 }
 
 function prepareMeshes(root: THREE.Object3D) {
@@ -140,6 +157,16 @@ function loadRoot(
     return loader.loadAsync(url);
   }
 
+  if (format === "fbx") {
+    const loader = new FBXLoader(manager);
+    return loader.loadAsync(url);
+  }
+
+  if (format === "3ds") {
+    const loader = new TDSLoader(manager);
+    return loader.loadAsync(url);
+  }
+
   const loader = new GLTFLoader(manager);
   const draco = new DRACOLoader();
   draco.setDecoderPath(DRACO_PATH);
@@ -163,8 +190,11 @@ export function LoadedModel({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const objectRef = useRef<THREE.Object3D | null>(null);
+  const sizeRef = useRef<{ x: number; y: number; z: number } | null>(null);
   const setModelStatus = useViewer((s) => s.setModelStatus);
+  const setSourceSize = useViewer((s) => s.setSourceSize);
   const resetCamera = useViewer((s) => s.resetCamera);
+  const frame = useViewer((s) => s.frame);
 
   useEffect(() => {
     let cancelled = false;
@@ -177,11 +207,20 @@ export function LoadedModel({
           return;
         }
         prepareMeshes(root);
-        fitToStudio(root);
+        toMillimeters(root, format);
+        const source = new THREE.Group();
+        source.userData.exportSource = true;
+        source.add(root);
+        const size = measureAndCenter(source);
+        sizeRef.current = size;
+        const view = groupRef.current;
+        if (view) {
+          view.add(source);
+          if (size) applyViewFit(view, size, useViewer.getState().frame);
+        }
         applyFinish(root, useViewer.getState().finishId);
-        const group = groupRef.current;
-        if (group) group.add(root);
-        objectRef.current = root;
+        objectRef.current = source;
+        setSourceSize(size);
         setModelStatus("ready");
         resetCamera();
       })
@@ -191,7 +230,9 @@ export function LoadedModel({
         const hint =
           format === "gltf"
             ? " Un .gltf suelto necesita sus .bin y texturas. Exporta un GLB (un solo archivo)."
-            : " Exporta desde Blender: File → Export → glTF 2.0 (.glb).";
+            : format === "fbx"
+              ? " Si el FBX falla, expórtalo otra vez como GLB (glTF 2.0)."
+              : " Desde Fusion o 3ds Max exporta GLB o FBX.";
         setModelStatus("error", message + hint);
       });
 
@@ -204,7 +245,13 @@ export function LoadedModel({
         objectRef.current = null;
       }
     };
-  }, [url, format, extras, setModelStatus, resetCamera]);
+  }, [url, format, extras, setModelStatus, setSourceSize, resetCamera]);
+
+  useEffect(() => {
+    const view = groupRef.current;
+    const size = sizeRef.current;
+    if (view && size) applyViewFit(view, size, frame);
+  }, [frame]);
 
   useEffect(() => {
     const current = objectRef.current;

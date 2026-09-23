@@ -215,7 +215,7 @@ export function HeadphoneModel({ finishId }: { finishId: string }) {
   const pad = useMemo(() => makeHeadband(1.05, 1.0, 0.06, 0.42, Math.PI - 0.42), []);
 
   return (
-    <group name="objeto-1">
+    <group name="objeto-1" userData={{ exportSource: true }}>
       <mesh name="diadema" material={metal} castShadow receiveShadow>
         <tubeGeometry args={[band, 72, 0.052, 18, false]} />
       </mesh>

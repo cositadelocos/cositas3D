@@ -10,7 +10,7 @@ import { FINISHES, ORIGINAL_FINISH, getFinish } from "@/lib/finishes";
 import { formatLabel } from "@/lib/model-files";
 import { SHADE_MODES, type ShadeMode } from "@/lib/shade";
 import { cn } from "@/lib/utils";
-import { ANIM_MODES, LIGHT_PRESETS, useViewer, type LightPresetId } from "@/lib/viewer-store";
+import { ANIM_MODES, CAPTURE_SIZES, EXPORT_FORMATS, LIGHT_PRESETS, useViewer, type LightPresetId } from "@/lib/viewer-store";
 
 function Field({
   label,
@@ -45,6 +45,8 @@ export function ControlPanel() {
   const setFinish = useViewer((s) => s.setFinish);
   const zoom = useViewer((s) => s.zoom);
   const setZoom = useViewer((s) => s.setZoom);
+  const frame = useViewer((s) => s.frame);
+  const setFrame = useViewer((s) => s.setFrame);
   const intensity = useViewer((s) => s.intensity);
   const setIntensity = useViewer((s) => s.setIntensity);
   const warmth = useViewer((s) => s.warmth);
@@ -61,6 +63,12 @@ export function ControlPanel() {
   const setAnimMode = useViewer((s) => s.setAnimMode);
   const resetCamera = useViewer((s) => s.resetCamera);
   const requestCapture = useViewer((s) => s.requestCapture);
+  const captureFormat = useViewer((s) => s.captureFormat);
+  const setCaptureFormat = useViewer((s) => s.setCaptureFormat);
+  const captureSize = useViewer((s) => s.captureSize);
+  const setCaptureSize = useViewer((s) => s.setCaptureSize);
+  const requestExport = useViewer((s) => s.requestExport);
+  const exportNote = useViewer((s) => s.exportNote);
   const modelKind = useViewer((s) => s.modelKind);
   const modelName = useViewer((s) => s.modelName);
   const modelFormat = useViewer((s) => s.modelFormat);
@@ -267,6 +275,19 @@ export function ControlPanel() {
       <Separator />
 
       <div className="space-y-3">
+        <Field label="Encuadre" value={`${Math.round(frame)}%`}>
+          <Slider
+            min={40}
+            max={180}
+            step={1}
+            value={[frame]}
+            onValueChange={(v) => setFrame(v[0] ?? frame)}
+            aria-label="Encuadre en el estudio"
+          />
+        </Field>
+        <p className="text-xs text-subtle text-pretty">
+          Solo cambia cómo se ve aquí. El zoom se ajusta solo. La exportación sigue en milímetros.
+        </p>
         <Field label="Zoom" value={`${Math.round(zoom)}%`}>
           <div className="flex items-center gap-3">
             <ZoomIn className="size-4 text-subtle" aria-hidden="true" />
@@ -285,11 +306,81 @@ export function ControlPanel() {
             <RotateCcw className="size-4" aria-hidden="true" />
             Cámara
           </Button>
-          <Button variant="outline" onClick={requestCapture}>
+          <Button onClick={requestCapture}>
             <Camera className="size-4" aria-hidden="true" />
             Captura
           </Button>
         </div>
+        <div className="grid grid-cols-2 gap-1 rounded-lg bg-background p-1">
+          <button
+            type="button"
+            onClick={() => setCaptureFormat("png")}
+            className={cn(
+              "h-9 rounded-md text-xs font-medium",
+              captureFormat === "png" ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
+            )}
+          >
+            PNG
+          </button>
+          <button
+            type="button"
+            onClick={() => setCaptureFormat("jpeg")}
+            className={cn(
+              "h-9 rounded-md text-xs font-medium",
+              captureFormat === "jpeg" ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
+            )}
+          >
+            JPEG
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-1 rounded-lg bg-background p-1">
+          {CAPTURE_SIZES.map((size) => (
+            <button
+              key={size.id}
+              type="button"
+              onClick={() => setCaptureSize(size.id)}
+              className={cn(
+                "h-9 rounded-md text-xs font-medium",
+                captureSize === size.id ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
+              )}
+            >
+              {size.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-subtle text-pretty">
+          {captureFormat === "png"
+            ? shadeMode === "mesh"
+              ? "PNG grande, fondo transparente: solo las líneas de la malla."
+              : "PNG grande, fondo transparente: el objeto con su material, sin el estudio."
+            : "JPEG del encuadre completo, con el estudio detrás."}
+        </p>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-sm font-medium">Exportar</h2>
+          <p className="mt-1 text-xs text-subtle text-pretty">
+            Sale lo visible, en milímetros, con el despiece si lo tienes abierto. El encuadre del estudio no se guarda. FBX de salida no: baja un GLB.
+          </p>
+        </div>
+        <div className="grid grid-cols-4 gap-1">
+          {EXPORT_FORMATS.map((format) => (
+            <Button
+              key={format.id}
+              type="button"
+              variant="outline"
+              size="sm"
+              title={format.hint}
+              onClick={() => requestExport(format.id)}
+            >
+              {format.label}
+            </Button>
+          ))}
+        </div>
+        {exportNote ? <p className="text-xs text-muted-foreground">{exportNote}</p> : null}
       </div>
 
       <Separator />

@@ -1,10 +1,23 @@
-export const ACCEPTED_MODEL_EXT = ["glb", "gltf", "obj", "stl"] as const;
+export const ACCEPTED_MODEL_EXT = ["glb", "gltf", "fbx", "obj", "stl", "3ds"] as const;
 export type ModelFormat = (typeof ACCEPTED_MODEL_EXT)[number];
 
-export const ACCEPT_ATTR = ".glb,.gltf,.obj,.stl,model/gltf-binary,model/gltf+json";
+export const ACCEPT_ATTR =
+  ".glb,.gltf,.fbx,.obj,.stl,.3ds,model/gltf-binary,model/gltf+json,application/octet-stream";
 export const MAX_MODEL_BYTES = 50 * 1024 * 1024;
 
-const PRIMARY_ORDER: ModelFormat[] = ["glb", "gltf", "obj", "stl"];
+const PRIMARY_ORDER: ModelFormat[] = ["glb", "gltf", "fbx", "obj", "stl", "3ds"];
+
+const NATIVE_HINT: Record<string, string> = {
+  f3d: "El .f3d de Fusion 360 no se abre aquí. En Fusion: Archivo → Exportar → FBX o glTF (.glb).",
+  f3z: "Ese paquete de Fusion no se abre aquí. Exporta FBX o GLB.",
+  max: "El .max de 3ds Max no se abre aquí. Exporta FBX, GLB, OBJ o STL.",
+  step: "STEP no se puede ver en el navegador. Desde Fusion exporta STL, FBX o GLB.",
+  stp: "STEP no se puede ver en el navegador. Desde Fusion exporta STL, FBX o GLB.",
+  iges: "IGES no se puede ver en el navegador. Exporta STL, FBX o GLB.",
+  igs: "IGES no se puede ver en el navegador. Exporta STL, FBX o GLB.",
+  sldprt: "Ese sólido de CAD no se abre aquí. Exporta STL, FBX o GLB.",
+  blend: "El .blend ábrelo en Blender y exporta GLB.",
+};
 
 export function fileExt(name: string): string {
   const parts = name.toLowerCase().split(".");
@@ -27,11 +40,16 @@ export function classifyModelFiles(files: File[]): { ok: true; value: Classified
     return { ok: false, error: "No se encontró ningún archivo." };
   }
 
+  const native = list.find((file) => NATIVE_HINT[fileExt(file.name)]);
+  if (native && !list.some((file) => isModelFormat(fileExt(file.name)))) {
+    return { ok: false, error: NATIVE_HINT[fileExt(native.name)] ?? "Formato no compatible." };
+  }
+
   const primary = PRIMARY_ORDER.map((ext) => list.find((file) => fileExt(file.name) === ext)).find(Boolean);
   if (!primary) {
     return {
       ok: false,
-      error: "Formato no compatible. Sube un .glb (recomendado), .gltf, .obj o .stl.",
+      error: "Formato no compatible. Sube GLB, FBX, OBJ, STL o 3DS. Fusion y 3ds Max: exporta, no subas el archivo nativo.",
     };
   }
   if (primary.size > MAX_MODEL_BYTES) {
@@ -53,5 +71,9 @@ export function formatLabel(format: ModelFormat) {
       return "OBJ";
     case "stl":
       return "STL";
+    case "fbx":
+      return "FBX";
+    case "3ds":
+      return "3DS";
   }
 }

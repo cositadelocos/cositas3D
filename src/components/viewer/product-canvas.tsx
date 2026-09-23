@@ -2,9 +2,11 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
-import { CAMERA, VIEW_DIRS, distanceToZoom, zoomToDistance } from "@/lib/camera";
+import { CAMERA, VIEW_DIRS, distanceToZoom, viewSpan, zoomToDistance } from "@/lib/camera";
 import { useViewer } from "@/lib/viewer-store";
 import { CaptureBridge } from "./capture-bridge";
+import { ExplodeApplier } from "./explode-applier";
+import { ExportBridge } from "./export-bridge";
 import { InspectSync } from "./inspect-sync";
 import { ModelAnimator } from "./model-animator";
 import { StudioScene } from "./studio-scene";
@@ -16,9 +18,9 @@ type ControlsHandle = {
   getDistance: () => number;
 };
 
-function applyDistance(controls: ControlsHandle, zoom: number) {
+function applyDistance(controls: ControlsHandle, zoom: number, frame: number) {
   const cam = controls.object;
-  const dist = zoomToDistance(zoom);
+  const dist = zoomToDistance(zoom, frame);
   const dir = new THREE.Vector3().subVectors(cam.position, controls.target);
   if (dir.lengthSq() < 1e-6) dir.set(CAMERA.position[0], CAMERA.position[1], CAMERA.position[2]);
   dir.setLength(dist);
@@ -26,8 +28,8 @@ function applyDistance(controls: ControlsHandle, zoom: number) {
   controls.update();
 }
 
-function applyView(controls: ControlsHandle, face: keyof typeof VIEW_DIRS, zoom: number) {
-  const dist = zoomToDistance(zoom);
+function applyView(controls: ControlsHandle, face: keyof typeof VIEW_DIRS, zoom: number, frame: number) {
+  const dist = zoomToDistance(zoom, frame);
   const dir = new THREE.Vector3(...VIEW_DIRS[face]).normalize().multiplyScalar(dist);
   controls.target.set(...CAMERA.target);
   controls.object.position.copy(controls.target).add(dir);
@@ -36,6 +38,7 @@ function applyView(controls: ControlsHandle, face: keyof typeof VIEW_DIRS, zoom:
 
 function CameraRig({ controlsRef }: { controlsRef: RefObject<ControlsHandle | null> }) {
   const zoom = useViewer((s) => s.zoom);
+  const frame = useViewer((s) => s.frame);
   const resetToken = useViewer((s) => s.resetToken);
   const viewFace = useViewer((s) => s.viewFace);
   const viewToken = useViewer((s) => s.viewToken);
@@ -48,7 +51,7 @@ function CameraRig({ controlsRef }: { controlsRef: RefObject<ControlsHandle | nu
       if (!controls) return;
       controls.object.position.set(...CAMERA.position);
       controls.target.set(...CAMERA.target);
-      applyDistance(controls, useViewer.getState().zoom);
+      applyDistance(controls, useViewer.getState().zoom, useViewer.getState().frame);
     });
     return () => cancelAnimationFrame(frame);
   }, [resetToken, controlsRef]);
@@ -57,21 +60,21 @@ function CameraRig({ controlsRef }: { controlsRef: RefObject<ControlsHandle | nu
     if (!viewToken || viewFace === "orbit") return;
     const controls = controlsRef.current;
     if (!controls) return;
-    applyView(controls, viewFace, useViewer.getState().zoom);
+    applyView(controls, viewFace, useViewer.getState().zoom, useViewer.getState().frame);
   }, [viewToken, viewFace, controlsRef]);
 
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls) return;
-    applyDistance(controls, zoom);
-  }, [zoom, controlsRef]);
+    applyDistance(controls, zoom, frame);
+  }, [zoom, frame, controlsRef]);
 
   useEffect(() => {
     const el = gl.domElement;
     const sync = () => {
       const controls = controlsRef.current;
       if (!controls) return;
-      const next = distanceToZoom(controls.getDistance());
+      const next = distanceToZoom(controls.getDistance(), useViewer.getState().frame);
       if (Math.abs(next - useViewer.getState().zoom) > 0.75) setZoom(next);
     };
     el.addEventListener("pointerup", sync);
@@ -88,13 +91,17 @@ function CameraRig({ controlsRef }: { controlsRef: RefObject<ControlsHandle | nu
 function Stage() {
   const productRef = useRef<THREE.Group>(null);
   const controlsRef = useRef<ControlsHandle | null>(null);
+  const frame = useViewer((s) => s.frame);
+  const span = viewSpan(frame);
 
   return (
     <>
       <StudioScene productRef={productRef} />
       <ModelAnimator rootRef={productRef} />
+      <ExplodeApplier rootRef={productRef} />
       <InspectSync rootRef={productRef} />
       <CaptureBridge />
+      <ExportBridge rootRef={productRef} />
       <OrbitControls
         ref={controlsRef as never}
         makeDefault
@@ -102,8 +109,8 @@ function Stage() {
         enableDamping
         dampingFactor={0.08}
         autoRotate={false}
-        minDistance={CAMERA.minDistance}
-        maxDistance={CAMERA.maxDistance}
+        minDistance={span.min}
+        maxDistance={span.max}
         minPolarAngle={CAMERA.minPolar}
         maxPolarAngle={CAMERA.maxPolar}
         rotateSpeed={0.72}

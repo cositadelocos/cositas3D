@@ -1,8 +1,11 @@
 import { Download, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { downloadDataUrl, downloadJson } from "@/lib/inspect";
 import { cn } from "@/lib/utils";
-import { useViewer } from "@/lib/viewer-store";
+import { useViewer, type ExplodeAxis } from "@/lib/viewer-store";
+
+const AXES: ExplodeAxis[] = ["x", "y", "z"];
 
 export function InspectPanel() {
   const parts = useViewer((s) => s.parts);
@@ -12,10 +15,49 @@ export function InspectPanel() {
   const textures = useViewer((s) => s.textures);
   const materials = useViewer((s) => s.materials);
   const modelName = useViewer((s) => s.modelName);
+  const explode = useViewer((s) => s.explode);
+  const setExplode = useViewer((s) => s.setExplode);
+  const explodeAxes = useViewer((s) => s.explodeAxes);
+  const toggleExplodeAxis = useViewer((s) => s.toggleExplodeAxis);
   const visibleCount = parts.filter((part) => !hiddenPartIds.includes(part.id)).length;
 
   return (
     <div className="space-y-5">
+      <div>
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-medium">Despiece</h2>
+          <p className="text-xs text-muted-foreground">{Math.round(explode)}%</p>
+        </div>
+        <p className="mb-2 text-xs text-subtle text-pretty">
+          Separa las partes desde el centro. Elige en qué ejes se pueden mover.
+        </p>
+        <div className="mb-3 grid grid-cols-3 gap-1 rounded-lg bg-background p-1">
+          {AXES.map((axis) => (
+            <button
+              key={axis}
+              type="button"
+              onClick={() => toggleExplodeAxis(axis)}
+              className={cn(
+                "h-9 rounded-md text-xs font-medium uppercase transition-[background-color,color] duration-[var(--motion-quick)]",
+                explodeAxes[axis]
+                  ? "bg-card text-foreground shadow-border"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Eje {axis}
+            </button>
+          ))}
+        </div>
+        <Slider
+          min={0}
+          max={100}
+          step={1}
+          value={[explode]}
+          onValueChange={(v) => setExplode(v[0] ?? 0)}
+          aria-label="Separación del despiece"
+        />
+      </div>
+
       <div>
         <div className="mb-2 flex items-baseline justify-between gap-3">
           <h2 className="text-sm font-medium">Partes</h2>

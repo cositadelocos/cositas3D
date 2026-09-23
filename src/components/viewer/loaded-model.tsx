@@ -83,6 +83,11 @@ type OrigPbr = {
   metalness?: number;
   roughness?: number;
   clearcoat?: number;
+  clearcoatRoughness?: number;
+  envMapIntensity?: number;
+  emissive?: THREE.Color;
+  emissiveIntensity?: number;
+  toneMapped?: boolean;
 };
 
 function applyFinish(root: THREE.Object3D, finishId: string) {
@@ -100,6 +105,11 @@ function applyFinish(root: THREE.Object3D, finishId: string) {
           metalness: record.metalness,
           roughness: record.roughness,
           clearcoat: record.clearcoat,
+          clearcoatRoughness: record.clearcoatRoughness,
+          envMapIntensity: record.envMapIntensity,
+          emissive: record.emissive?.clone(),
+          emissiveIntensity: record.emissiveIntensity,
+          toneMapped: record.toneMapped,
         };
       }
       const orig = record.userData.origPbr;
@@ -108,11 +118,23 @@ function applyFinish(root: THREE.Object3D, finishId: string) {
         if (orig.metalness != null) record.metalness = orig.metalness;
         if (orig.roughness != null) record.roughness = orig.roughness;
         if (orig.clearcoat != null) record.clearcoat = orig.clearcoat;
+        if (orig.clearcoatRoughness != null) record.clearcoatRoughness = orig.clearcoatRoughness;
+        if (orig.envMapIntensity != null) record.envMapIntensity = orig.envMapIntensity;
+        if (orig.emissive && record.emissive) record.emissive.copy(orig.emissive);
+        if (orig.emissiveIntensity != null) record.emissiveIntensity = orig.emissiveIntensity;
+        if (orig.toneMapped != null) record.toneMapped = orig.toneMapped;
       } else {
         record.color.set(finish.metal);
         if ("metalness" in record) record.metalness = finish.metalness;
         if ("roughness" in record) record.roughness = finish.roughness;
         if ("clearcoat" in record) record.clearcoat = finish.clearcoat;
+        if ("clearcoatRoughness" in record) record.clearcoatRoughness = finish.clearcoatRoughness;
+        if ("envMapIntensity" in record) record.envMapIntensity = finish.envMapIntensity;
+        if (record.emissive) {
+          record.emissive.set(finish.emissive);
+          record.emissiveIntensity = finish.emissiveIntensity;
+        }
+        record.toneMapped = finish.emissiveIntensity < 1;
       }
       record.needsUpdate = true;
     }

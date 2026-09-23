@@ -71,7 +71,7 @@ export function ViewerApp() {
     >
       <header className="relative z-20 flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:absolute lg:inset-x-0 lg:top-0 lg:px-8">
         <a href="/" className="flex items-center gap-2.5 text-foreground">
-          <BrandMark className="size-7" />
+          <BrandMark className="h-10 w-auto" />
           <span className="font-display text-lg tracking-wide">{APP_NAME}</span>
         </a>
         <p className="text-xs tracking-[0.18em] text-subtle uppercase">{APP_SUBTITLE}</p>

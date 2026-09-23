@@ -53,6 +53,11 @@ function lerpMaterial(
     mat.metalness += (finish.metalness - mat.metalness) * t;
     mat.roughness += (finish.roughness - mat.roughness) * t;
     mat.clearcoat += (finish.clearcoat - mat.clearcoat) * t;
+    mat.clearcoatRoughness += (finish.clearcoatRoughness - mat.clearcoatRoughness) * t;
+    mat.envMapIntensity += (finish.envMapIntensity - mat.envMapIntensity) * t;
+    _color.set(finish.emissive);
+    mat.emissive.lerp(_color, t);
+    mat.emissiveIntensity += (finish.emissiveIntensity - mat.emissiveIntensity) * t;
   }
 }
 

@@ -79,7 +79,7 @@ export function ControlPanel() {
   const modelFormat = useViewer((s) => s.modelFormat);
   const finish = getFinish(finishId);
   const isFile = modelKind === "file";
-  const swatches = isFile ? [ORIGINAL_FINISH, ...FINISHES] : FINISHES;
+  const swatches = [ORIGINAL_FINISH, ...FINISHES];
 
   return (
     <aside className="flex flex-col gap-5 rounded-xl bg-card p-4 shadow-border lg:p-5">

@@ -157,8 +157,8 @@ export const FINISHES: Finish[] = [
 
 export const ORIGINAL_FINISH: Finish = {
   id: "original",
-  name: "Original",
-  caption: "Materiales del archivo",
+  name: "Normal",
+  caption: "El material del modelo, sin tinte",
   swatch: "#d4d4d8",
   metal: "#c5cad2",
   metalness: 0.7,

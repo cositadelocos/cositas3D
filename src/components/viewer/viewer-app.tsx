@@ -13,6 +13,8 @@ export function ViewerApp() {
   const loadModelFromFiles = useViewer((s) => s.loadModelFromFiles);
   const requestCapture = useViewer((s) => s.requestCapture);
   const capturedAt = useViewer((s) => s.capturedAt);
+  const capturePreview = useViewer((s) => s.capturePreview);
+  const setCapturePreview = useViewer((s) => s.setCapturePreview);
   const modelStatus = useViewer((s) => s.modelStatus);
   const [dragOver, setDragOver] = useState(false);
   const [flash, setFlash] = useState(false);
@@ -41,7 +43,7 @@ export function ViewerApp() {
   }, [resetCamera, requestCapture]);
 
   useEffect(() => {
-    if (!capturedAt) return;
+    if (!capturedAt || useViewer.getState().capturePreview) return;
     setFlash(true);
     const id = window.setTimeout(() => setFlash(false), 1400);
     return () => window.clearTimeout(id);
@@ -117,6 +119,49 @@ export function ViewerApp() {
           <div className="rounded-xl bg-card px-8 py-6 text-center shadow-border">
             <p className="font-display text-xl">Suelta el modelo</p>
             <p className="mt-1 text-sm text-muted-foreground">GLB, FBX, OBJ, STL o 3DS</p>
+          </div>
+        </div>
+      ) : null}
+      {capturePreview ? (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/85 p-4">
+          <img
+            src={capturePreview.url}
+            alt="Captura del modelo"
+            className="min-h-0 w-full flex-1 object-contain"
+          />
+          <p className="mt-3 text-center text-sm text-white">
+            Mantén pulsada la imagen y elige Guardar en fotos.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              className="h-11 flex-1 rounded-md bg-white text-sm font-medium text-black"
+              onClick={() => {
+                const preview = capturePreview;
+                void (async () => {
+                  const blob = await fetch(preview.url).then((response) => response.blob());
+                  const file = new File([blob], preview.filename, { type: preview.mime });
+                  if (navigator.canShare?.({ files: [file] })) {
+                    try {
+                      await navigator.share({ files: [file] });
+                      return;
+                    } catch (error) {
+                      if (error instanceof Error && error.name === "AbortError") return;
+                    }
+                  }
+                  window.open(preview.url, "_blank");
+                })();
+              }}
+            >
+              Guardar
+            </button>
+            <button
+              type="button"
+              className="h-11 rounded-md bg-white/15 px-4 text-sm text-white"
+              onClick={() => setCapturePreview(null)}
+            >
+              Cerrar
+            </button>
           </div>
         </div>
       ) : null}

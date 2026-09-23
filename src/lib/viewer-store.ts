@@ -72,6 +72,7 @@ type ViewerState = {
   capturedAt: number;
   captureFormat: CaptureFormat;
   captureSize: CaptureSize;
+  capturePreview: { url: string; filename: string; mime: string } | null;
   explode: number;
   explodeAxes: Record<ExplodeAxis, boolean>;
   exportToken: number;
@@ -105,6 +106,7 @@ type ViewerState = {
   resetCamera: () => void;
   requestCapture: () => void;
   markCaptured: () => void;
+  setCapturePreview: (preview: { url: string; filename: string; mime: string } | null) => void;
   setCaptureFormat: (format: CaptureFormat) => void;
   setCaptureSize: (size: CaptureSize) => void;
   setExplode: (value: number) => void;
@@ -142,6 +144,7 @@ export const useViewer = create<ViewerState>((set, get) => ({
   capturedAt: 0,
   captureFormat: "png",
   captureSize: "2k",
+  capturePreview: null,
   explode: 0,
   explodeAxes: { x: true, y: true, z: true },
   exportToken: 0,
@@ -189,6 +192,11 @@ export const useViewer = create<ViewerState>((set, get) => ({
     })),
   requestCapture: () => set((state) => ({ captureToken: state.captureToken + 1 })),
   markCaptured: () => set({ capturedAt: Date.now() }),
+  setCapturePreview: (capturePreview) => {
+    const prev = get().capturePreview;
+    if (prev?.url.startsWith("blob:")) URL.revokeObjectURL(prev.url);
+    set({ capturePreview, capturedAt: capturePreview ? Date.now() : get().capturedAt });
+  },
   setCaptureFormat: (captureFormat) => set({ captureFormat }),
   setCaptureSize: (captureSize) => set({ captureSize }),
   setExplode: (explode) => set({ explode }),

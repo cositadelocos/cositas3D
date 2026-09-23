@@ -4,6 +4,22 @@ import * as THREE from "three";
 import type { CaptureSize } from "@/lib/viewer-store";
 import { useViewer } from "@/lib/viewer-store";
 
+function isIos() {
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function saveOnDesktop(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
 function fileSafe(name: string) {
   return (
     name
@@ -46,11 +62,14 @@ export function CaptureBridge() {
     const { captureFormat, captureSize, modelName, shadeMode } = useViewer.getState();
     const isolate = captureFormat === "png";
     const view = gl.domElement;
+    const maxTexture = isIos()
+      ? Math.min(gl.capabilities.maxTextureSize, 2048)
+      : gl.capabilities.maxTextureSize;
     const { w, h } = outputSize(
       captureSize,
       view.clientWidth || 1280,
       view.clientHeight || 720,
-      gl.capabilities.maxTextureSize,
+      maxTexture,
     );
 
     const prevTarget = gl.getRenderTarget();
@@ -63,8 +82,8 @@ export function CaptureBridge() {
     const target = new THREE.WebGLRenderTarget(w, h, {
       format: THREE.RGBAFormat,
       type: THREE.UnsignedByteType,
-      colorSpace: THREE.SRGBColorSpace,
       depthBuffer: true,
+      stencilBuffer: false,
     });
 
     if (isolate) {
@@ -99,12 +118,24 @@ export function CaptureBridge() {
     ctx.putImageData(image, 0, 0);
 
     const mime = captureFormat === "jpeg" ? "image/jpeg" : "image/png";
-    const url = canvas.toDataURL(mime, 0.95);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${fileSafe(modelName)}-${shadeMode}-${captureSize}.${captureFormat === "jpeg" ? "jpg" : "png"}`;
-    link.click();
-    useViewer.getState().markCaptured();
+    const filename = `${fileSafe(modelName)}-${shadeMode}-${captureSize}.${captureFormat === "jpeg" ? "jpg" : "png"}`;
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        if (isIos()) {
+          useViewer.getState().setCapturePreview({
+            url: URL.createObjectURL(blob),
+            filename,
+            mime,
+          });
+          return;
+        }
+        saveOnDesktop(blob, filename);
+        useViewer.getState().markCaptured();
+      },
+      mime,
+      0.95,
+    );
   }, [captureToken, gl, scene, camera]);
 
   return null;

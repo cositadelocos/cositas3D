@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, type ReactNode, type RefObject } from "reac
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { useViewer, type LightPresetId } from "@/lib/viewer-store";
+import { getSceneLook } from "@/lib/scenes";
 import { HeadphoneModel } from "./headphone-model";
 import { LoadedModel } from "./loaded-model";
 import { ShadeApplier } from "./shade-applier";
@@ -16,6 +17,17 @@ const KEY_POS: Record<LightPresetId | "custom", [number, number, number]> = {
   custom: [3.6, 5.6, 4.0],
 };
 
+function SceneBackdrop({ color }: { color: string }) {
+  const { gl, scene } = useThree();
+
+  useEffect(() => {
+    const next = new THREE.Color(color);
+    scene.background = next;
+    gl.setClearColor(next, 1);
+  }, [color, gl, scene]);
+
+  return null;
+}
 function mixKeyColor(warmth: number) {
   return new THREE.Color("#f2f4f8").lerp(new THREE.Color("#ffd2a6"), warmth);
 }
@@ -66,14 +78,17 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
   const modelFormat = useViewer((s) => s.modelFormat);
   const modelExtras = useViewer((s) => s.modelExtras);
   const shadeMode = useViewer((s) => s.shadeMode);
+  const sceneId = useViewer((s) => s.sceneId);
+  const sceneColor = useViewer((s) => s.sceneColor);
+  const look = useMemo(() => getSceneLook(sceneId, sceneColor), [sceneId, sceneColor]);
   const keyColor = useMemo(() => mixKeyColor(warmth), [warmth]);
   const pos = KEY_POS[preset];
 
   return (
     <>
-      <color attach="background" args={["#0c0c0e"]} />
+      <SceneBackdrop color={look.background} />
       <StudioEnvironment intensity={env} />
-      <hemisphereLight args={["#e4e8f0", "#2a2622", 0.55 * intensity]} />
+      <hemisphereLight args={[look.hemiSky, look.hemiGround, 0.55 * intensity]} />
       <ambientLight intensity={0.28 * intensity} />
       <directionalLight
         castShadow
@@ -107,15 +122,15 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
       <ShadeApplier rootRef={productRef} />
       <group userData={{ studio: true }}>
         {shadeMode === "mesh" ? null : (
-          <ContactShadows position={[0, -0.5, 0]} opacity={0.45} scale={8} blur={2.8} far={3} color="#000000" />
+          <ContactShadows position={[0, -0.5, 0]} opacity={0.45} scale={8} blur={2.8} far={3} color={look.shadow} />
         )}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.502, 0]} receiveShadow>
           <circleGeometry args={[11, 64]} />
-          <meshStandardMaterial color="#18181b" roughness={0.9} metalness={0.08} />
+          <meshStandardMaterial color={look.floor} roughness={0.9} metalness={0.08} />
         </mesh>
         <mesh position={[0, 2.6, -6.5]} receiveShadow>
           <planeGeometry args={[30, 16]} />
-          <meshStandardMaterial color="#141416" roughness={1} metalness={0} />
+          <meshStandardMaterial color={look.wall} roughness={1} metalness={0} />
         </mesh>
       </group>
     </>

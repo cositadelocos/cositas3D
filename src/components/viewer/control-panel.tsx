@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { InspectPanel } from "./inspect-panel";
 import { ModelUpload } from "./model-upload";
 import { APP_SUBTITLE, DEMO_OBJECT_NAME } from "@/lib/brand";
+import { SCENES } from "@/lib/scenes";
 import { FINISHES, ORIGINAL_FINISH, getFinish } from "@/lib/finishes";
 import { formatLabel } from "@/lib/model-files";
 import { SHADE_MODES, type ShadeMode } from "@/lib/shade";
@@ -55,6 +56,10 @@ export function ControlPanel() {
   const setEnv = useViewer((s) => s.setEnv);
   const preset = useViewer((s) => s.preset);
   const setPreset = useViewer((s) => s.setPreset);
+  const sceneId = useViewer((s) => s.sceneId);
+  const sceneColor = useViewer((s) => s.sceneColor);
+  const setScene = useViewer((s) => s.setScene);
+  const setSceneColor = useViewer((s) => s.setSceneColor);
   const shadeMode = useViewer((s) => s.shadeMode);
   const setShadeMode = useViewer((s) => s.setShadeMode);
   const meshColor = useViewer((s) => s.meshColor);
@@ -270,6 +275,51 @@ export function ControlPanel() {
             aria-label="Luz de entorno"
           />
         </Field>
+      </div>
+
+      <Separator />
+
+      <div>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="text-sm font-medium">Escenario</h2>
+          <p className="text-xs text-muted-foreground">
+            {sceneId === "custom" ? "Color" : (SCENES.find((scene) => scene.id === sceneId)?.name ?? "Noche")}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {SCENES.map((scene) => {
+            const selected = scene.id === sceneId;
+            return (
+              <button
+                key={scene.id}
+                type="button"
+                onClick={() => {
+                  if (scene.id !== "custom") setScene(scene.id);
+                }}
+                aria-label={scene.name}
+                title={scene.name}
+                className={cn(
+                  "size-11 rounded-full transition-[transform,box-shadow] duration-[var(--motion-quick)] ease-[var(--ease-out)] active:scale-[0.96]",
+                  selected
+                    ? "shadow-border-hover ring-2 ring-foreground ring-offset-2 ring-offset-card"
+                    : "shadow-border hover:shadow-border-hover",
+                )}
+                style={{ backgroundColor: scene.background }}
+              />
+            );
+          })}
+          <label className="relative size-11 overflow-hidden rounded-full shadow-border" title="Color libre">
+            <span className="sr-only">Color del escenario</span>
+            <input
+              type="color"
+              value={sceneColor}
+              onChange={(event) => setSceneColor(event.target.value)}
+              className="absolute inset-0 cursor-pointer opacity-0"
+            />
+            <span className="block size-full" style={{ backgroundColor: sceneColor }} />
+          </label>
+        </div>
+        <p className="mt-2 text-xs text-subtle">Fondo, piso y pared. El último círculo es un color libre.</p>
       </div>
 
       <Separator />

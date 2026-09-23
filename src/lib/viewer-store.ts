@@ -3,6 +3,7 @@ import { DEMO_OBJECT_NAME } from "@/lib/brand";
 import type { ViewFace } from "@/lib/camera";
 import type { MaterialAsset, ModelPart, TextureAsset } from "@/lib/inspect";
 import { classifyModelFiles, type ModelFormat } from "@/lib/model-files";
+import { SCENES, type SceneId } from "@/lib/scenes";
 import type { ShadeMode } from "@/lib/shade";
 
 export const LIGHT_PRESETS = {
@@ -59,6 +60,8 @@ type ViewerState = {
   warmth: number;
   env: number;
   preset: LightPresetId | "custom";
+  sceneId: SceneId | "custom";
+  sceneColor: string;
   shadeMode: ShadeMode;
   meshColor: string;
   animMode: AnimMode;
@@ -93,6 +96,8 @@ type ViewerState = {
   setWarmth: (value: number) => void;
   setEnv: (value: number) => void;
   setPreset: (preset: LightPresetId) => void;
+  setScene: (id: SceneId) => void;
+  setSceneColor: (color: string) => void;
   setShadeMode: (mode: ShadeMode) => void;
   setMeshColor: (color: string) => void;
   setAnimMode: (mode: AnimMode) => void;
@@ -125,6 +130,8 @@ export const useViewer = create<ViewerState>((set, get) => ({
   warmth: LIGHT_PRESETS.estudio.warmth,
   env: LIGHT_PRESETS.estudio.env,
   preset: "estudio",
+  sceneId: "noche",
+  sceneColor: SCENES[0]!.background,
   shadeMode: "material",
   meshColor: DEFAULT_MESH_COLOR,
   animMode: "turntable",
@@ -165,6 +172,11 @@ export const useViewer = create<ViewerState>((set, get) => ({
       warmth: LIGHT_PRESETS[preset].warmth,
       env: LIGHT_PRESETS[preset].env,
     }),
+  setScene: (sceneId) => {
+    const scene = SCENES.find((item) => item.id === sceneId) ?? SCENES[0]!;
+    set({ sceneId, sceneColor: scene.background });
+  },
+  setSceneColor: (sceneColor) => set({ sceneColor, sceneId: "custom" }),
   setShadeMode: (shadeMode) => set({ shadeMode }),
   setMeshColor: (meshColor) => set({ meshColor, shadeMode: "mesh" }),
   setAnimMode: (animMode) => set({ animMode }),

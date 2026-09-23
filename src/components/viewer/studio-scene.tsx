@@ -55,7 +55,7 @@ function StudioEnvironment({ intensity }: { intensity: number }) {
   return null;
 }
 
-const DEMO_URL = "/objeto-1.glb";
+const DEMO_URL = "/objeto-1.glb?v=2";
 
 export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group | null> }) {
   const finishId = useViewer((s) => s.finishId);

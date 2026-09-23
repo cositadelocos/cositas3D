@@ -4,11 +4,47 @@ import * as THREE from "three";
 import { useViewer } from "@/lib/viewer-store";
 
 const _box = new THREE.Box3();
+const _size = new THREE.Vector3();
 const _center = new THREE.Vector3();
-const _part = new THREE.Vector3();
 const _offset = new THREE.Vector3();
 const _local = new THREE.Vector3();
 const _world = new THREE.Vector3();
+const _pool: THREE.Vector3[] = [];
+let _cursor = 0;
+
+type Bucket = { id: string; meshes: THREE.Mesh[]; center: THREE.Vector3 };
+
+function takeVec() {
+  const vec = _pool[_cursor] ?? new THREE.Vector3();
+  _pool[_cursor] = vec;
+  _cursor += 1;
+  return vec;
+}
+
+function shiftOnAxis(parts: Bucket[], axis: "x" | "y" | "z", reach: number, modelSize: number, amount: number) {
+  const shifts = new Map<string, number>();
+  if (parts.length < 2 || reach <= 0) return shifts;
+
+  const ordered = [...parts].sort((a, b) => a.center[axis] - b.center[axis] || a.id.localeCompare(b.id));
+  let min = Infinity;
+  let max = -Infinity;
+  for (const part of ordered) {
+    min = Math.min(min, part.center[axis]);
+    max = Math.max(max, part.center[axis]);
+  }
+  const span = max - min;
+  const flat = span < modelSize * 0.08;
+
+  ordered.forEach((part, index) => {
+    if (flat) {
+      const t = ordered.length === 1 ? 0 : index / (ordered.length - 1) - 0.5;
+      shifts.set(part.id, t * 2 * reach);
+      return;
+    }
+    shifts.set(part.id, (part.center[axis] - _center[axis]) * amount);
+  });
+  return shifts;
+}
 
 export function ExplodeApplier({ rootRef }: { rootRef: RefObject<THREE.Group | null> }) {
   useFrame(() => {
@@ -37,17 +73,23 @@ export function ExplodeApplier({ rootRef }: { rootRef: RefObject<THREE.Group | n
     }
     if (_box.isEmpty()) return;
     _box.getCenter(_center);
+    _box.getSize(_size);
+    const modelSize = Math.max(_size.x, _size.y, _size.z, 1e-4);
+    const reach = modelSize * amount * 0.55;
 
-    const buckets = new Map<string, THREE.Mesh[]>();
+    const groups = new Map<string, THREE.Mesh[]>();
     for (const mesh of meshes) {
       const id = (mesh.userData.partId as string | undefined) ?? mesh.uuid;
-      const list = buckets.get(id) ?? [];
+      const list = groups.get(id) ?? [];
       list.push(mesh);
-      buckets.set(id, list);
+      groups.set(id, list);
     }
+    if (groups.size < 2) return;
 
-    for (const group of buckets.values()) {
-      _part.set(0, 0, 0);
+    _cursor = 0;
+    const parts: Bucket[] = [];
+    for (const [id, group] of groups) {
+      const center = takeVec().set(0, 0, 0);
       let counted = 0;
       for (const mesh of group) {
         if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
@@ -55,22 +97,24 @@ export function ExplodeApplier({ rootRef }: { rootRef: RefObject<THREE.Group | n
         if (!bounds) continue;
         bounds.getCenter(_local);
         _local.applyMatrix4(mesh.matrixWorld);
-        _part.add(_local);
+        center.add(_local);
         counted += 1;
       }
       if (!counted) continue;
-      _part.multiplyScalar(1 / counted);
+      center.multiplyScalar(1 / counted);
+      parts.push({ id, meshes: group, center });
+    }
+    if (parts.length < 2) return;
 
-      // World axes, the same ones the corner gizmo draws: X red, Y green, Z blue.
-      _offset.set(
-        explodeAxes.x ? _part.x - _center.x : 0,
-        explodeAxes.y ? _part.y - _center.y : 0,
-        explodeAxes.z ? _part.z - _center.z : 0,
-      );
-      _offset.multiplyScalar(amount);
+    const shiftX = explodeAxes.x ? shiftOnAxis(parts, "x", reach, modelSize, amount) : null;
+    const shiftY = explodeAxes.y ? shiftOnAxis(parts, "y", reach, modelSize, amount) : null;
+    const shiftZ = explodeAxes.z ? shiftOnAxis(parts, "z", reach, modelSize, amount) : null;
+
+    for (const part of parts) {
+      _offset.set(shiftX?.get(part.id) ?? 0, shiftY?.get(part.id) ?? 0, shiftZ?.get(part.id) ?? 0);
       if (_offset.lengthSq() < 1e-10) continue;
 
-      for (const mesh of group) {
+      for (const mesh of part.meshes) {
         const parent = mesh.parent;
         if (!parent) continue;
         mesh.getWorldPosition(_world);

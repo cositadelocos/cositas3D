@@ -53,7 +53,11 @@ export function classifyModelFiles(files: File[]): { ok: true; value: Classified
     };
   }
   if (primary.size > MAX_MODEL_BYTES) {
-    return { ok: false, error: "El archivo supera 50 MB. Exporta un GLB más ligero." };
+    const mb = (primary.size / (1024 * 1024)).toFixed(1);
+    return {
+      ok: false,
+      error: `No se cargó porque pesa ${mb} MB. El límite es 50 MB.`,
+    };
   }
 
   const format = fileExt(primary.name) as ModelFormat;

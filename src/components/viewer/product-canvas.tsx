@@ -147,12 +147,14 @@ export function ProductCanvas() {
     <Canvas
       className="touch-none"
       shadows
-      dpr={[1, 1.75]}
+      dpr={
+        window.matchMedia("(pointer: coarse)").matches ? [1, 1.15] : [1, 1.5]
+      }
       camera={{ position: [...CAMERA.position], fov: CAMERA.fov, near: 0.1, far: 40 }}
       gl={{
         antialias: true,
         alpha: false,
-        preserveDrawingBuffer: true,
+        preserveDrawingBuffer: false,
         powerPreference: "high-performance",
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 1.15,

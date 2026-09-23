@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import type { RefObject } from "react";
+import { useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { useViewer } from "@/lib/viewer-store";
 
@@ -47,9 +47,26 @@ function shiftOnAxis(parts: Bucket[], axis: "x" | "y" | "z", reach: number, mode
 }
 
 export function ExplodeApplier({ rootRef }: { rootRef: RefObject<THREE.Group | null> }) {
+  const wasOn = useRef(false);
+
   useFrame(() => {
     const root = rootRef.current;
     if (!root) return;
+
+    const { explode, explodeAxes } = useViewer.getState();
+    const amount = explode / 100;
+    const active = amount > 0 && (explodeAxes.x || explodeAxes.y || explodeAxes.z);
+    if (!active) {
+      if (!wasOn.current) return;
+      wasOn.current = false;
+      root.traverse((child) => {
+        const mesh = child as THREE.Mesh;
+        if (!mesh.isMesh || !mesh.userData.restLocal) return;
+        mesh.position.copy(mesh.userData.restLocal as THREE.Vector3);
+      });
+      return;
+    }
+    wasOn.current = true;
 
     const meshes: THREE.Mesh[] = [];
     root.traverse((child) => {
@@ -60,10 +77,7 @@ export function ExplodeApplier({ rootRef }: { rootRef: RefObject<THREE.Group | n
       meshes.push(mesh);
     });
 
-    const { explode, explodeAxes } = useViewer.getState();
-    const amount = explode / 100;
-    const anyAxis = explodeAxes.x || explodeAxes.y || explodeAxes.z;
-    if (amount <= 0 || !anyAxis || meshes.length < 2) return;
+    if (meshes.length < 2) return;
 
     root.updateWorldMatrix(true, true);
     _box.makeEmpty();

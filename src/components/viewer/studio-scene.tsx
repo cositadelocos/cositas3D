@@ -55,7 +55,7 @@ function StudioEnvironment({ intensity }: { intensity: number }) {
   return null;
 }
 
-const DEMO_URL = "/objeto-1.glb?v=2";
+const DEMO_URL = "/objeto-1.glb?v=3";
 
 export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group | null> }) {
   const finishId = useViewer((s) => s.finishId);
@@ -85,7 +85,7 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
         position={pos}
         intensity={2.1 * intensity}
         color={keyColor}
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={[512, 512]}
         shadow-camera-near={1}
         shadow-camera-far={20}
         shadow-camera-left={-5}
@@ -107,7 +107,15 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
       <ShadeApplier rootRef={productRef} />
       <group userData={{ studio: true }}>
         {shadeMode === "mesh" ? null : (
-          <ContactShadows position={[0, -0.5, 0]} opacity={0.45} scale={8} blur={2.8} far={3} color={look.shadow} />
+          <ContactShadows
+            position={[0, -0.5, 0]}
+            opacity={0.45}
+            scale={8}
+            blur={2.4}
+            far={3}
+            resolution={256}
+            color={look.shadow}
+          />
         )}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.502, 0]} receiveShadow>
           <circleGeometry args={[11, 64]} />

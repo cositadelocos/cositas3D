@@ -214,7 +214,8 @@ export const useViewer = create<ViewerState>((set, get) => ({
   loadModelFromFiles: (files) => {
     const classified = classifyModelFiles(files);
     if (!classified.ok) {
-      set({ modelStatus: "error", modelError: classified.error });
+      const tooHeavy = classified.error.includes("El límite es 50 MB");
+      set(tooHeavy ? { modelError: classified.error } : { modelStatus: "error", modelError: classified.error });
       return;
     }
 

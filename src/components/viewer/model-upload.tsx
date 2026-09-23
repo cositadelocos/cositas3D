@@ -65,14 +65,13 @@ export function ModelUpload() {
           {modelStatus === "loading" ? "Cargando…" : "Cargar modelo"}
         </span>
         <span className="text-xs text-subtle text-pretty">
-          Fusion 360 y 3ds Max: exporta{" "}
-          <span className="text-muted-foreground">GLB o FBX</span>
+          GLB, FBX, glTF, OBJ, STL o 3DS. Máximo 50 MB.
         </span>
       </button>
 
       <p className="text-xs text-subtle text-pretty">
-        GLB, FBX, glTF, OBJ, STL y 3DS, siempre en milímetros. El archivo nativo no entra: ni .f3d, ni .max, ni STEP. En pantalla se
-        encuadra solo; la exportación sale en mm, sin ese encuadre.
+        Si el archivo pesa más de 50 MB, no entra. Fusion y 3ds Max: exporta GLB o FBX, no el archivo nativo. En
+        pantalla se encuadra solo; la exportación sale en milímetros, sin ese encuadre.
       </p>
       {sourceSize ? (
         <p className="text-xs text-muted-foreground">
@@ -91,7 +90,18 @@ export function ModelUpload() {
         </div>
       ) : null}
 
-      {modelError ? <p className="text-xs text-pretty text-muted-foreground">{modelError}</p> : null}
+      {modelError ? (
+        <p
+          className={cn(
+            "text-xs text-pretty",
+            modelError.includes("50 MB")
+              ? "rounded-md bg-background px-3 py-2 text-foreground shadow-border"
+              : "text-muted-foreground",
+          )}
+        >
+          {modelError}
+        </p>
+      ) : null}
     </div>
   );
 }

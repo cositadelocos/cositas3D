@@ -8,7 +8,7 @@ const _center = new THREE.Vector3();
 const _part = new THREE.Vector3();
 const _offset = new THREE.Vector3();
 const _local = new THREE.Vector3();
-const _inv = new THREE.Matrix4();
+const _world = new THREE.Vector3();
 
 export function ExplodeApplier({ rootRef }: { rootRef: RefObject<THREE.Group | null> }) {
   useFrame(() => {
@@ -60,23 +60,23 @@ export function ExplodeApplier({ rootRef }: { rootRef: RefObject<THREE.Group | n
       }
       if (!counted) continue;
       _part.multiplyScalar(1 / counted);
-      _offset.copy(_part).sub(_center);
-      if (!explodeAxes.x) _offset.x = 0;
-      if (!explodeAxes.y) _offset.y = 0;
-      if (!explodeAxes.z) _offset.z = 0;
+
+      // World axes, the same ones the corner gizmo draws: X red, Y green, Z blue.
+      _offset.set(
+        explodeAxes.x ? _part.x - _center.x : 0,
+        explodeAxes.y ? _part.y - _center.y : 0,
+        explodeAxes.z ? _part.z - _center.z : 0,
+      );
       _offset.multiplyScalar(amount);
+      if (_offset.lengthSq() < 1e-10) continue;
 
       for (const mesh of group) {
         const parent = mesh.parent;
         if (!parent) continue;
-        _inv.copy(parent.matrixWorld).invert();
-        const e = _inv.elements;
-        const lx = e[0] * _offset.x + e[4] * _offset.y + e[8] * _offset.z;
-        const ly = e[1] * _offset.x + e[5] * _offset.y + e[9] * _offset.z;
-        const lz = e[2] * _offset.x + e[6] * _offset.y + e[10] * _offset.z;
-        mesh.position.x += lx;
-        mesh.position.y += ly;
-        mesh.position.z += lz;
+        mesh.getWorldPosition(_world);
+        _world.add(_offset);
+        parent.worldToLocal(_world);
+        mesh.position.copy(_world);
       }
     }
   });

@@ -1,5 +1,5 @@
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, GizmoHelper, GizmoViewport } from "@react-three/drei";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
 import { CAMERA, VIEW_DIRS, distanceToZoom, viewSpan, zoomToDistance } from "@/lib/camera";
@@ -116,6 +116,17 @@ function Stage() {
         rotateSpeed={0.72}
         zoomSpeed={0.7}
       />
+      <GizmoHelper alignment="top-right" margin={[28, 76]}>
+        <GizmoViewport
+          disabled
+          scale={22}
+          hideNegativeAxes
+          axisColors={["#e5484d", "#30a46c", "#3b82f6"]}
+          labelColor="#ffffff"
+          labels={["X", "Y", "Z"]}
+          axisHeadScale={0.85}
+        />
+      </GizmoHelper>
       <CameraRig controlsRef={controlsRef} />
     </>
   );

@@ -29,7 +29,7 @@ export function InspectPanel() {
           <p className="text-xs text-muted-foreground">{Math.round(explode)}%</p>
         </div>
         <p className="mb-2 text-xs text-subtle text-pretty">
-          Separa las partes desde el centro. Elige en qué ejes se pueden mover.
+          Separa las partes desde el centro, solo en los ejes del gizmo: X rojo, Y verde, Z azul.
         </p>
         <div className="mb-3 grid grid-cols-3 gap-1 rounded-lg bg-background p-1">
           {AXES.map((axis) => (
@@ -40,8 +40,11 @@ export function InspectPanel() {
               className={cn(
                 "h-9 rounded-md text-xs font-medium uppercase transition-[background-color,color] duration-[var(--motion-quick)]",
                 explodeAxes[axis]
-                  ? "bg-card text-foreground shadow-border"
+                  ? "bg-card shadow-border"
                   : "text-muted-foreground hover:text-foreground",
+                axis === "x" && "text-[#e5484d]",
+                axis === "y" && "text-[#30a46c]",
+                axis === "z" && "text-[#3b82f6]",
               )}
             >
               Eje {axis}

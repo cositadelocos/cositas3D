@@ -1,11 +1,10 @@
 import { ContactShadows } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useMemo, type RefObject } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { useViewer, type LightPresetId } from "@/lib/viewer-store";
 import { getSceneLook } from "@/lib/scenes";
-import { HeadphoneModel } from "./headphone-model";
 import { LoadedModel } from "./loaded-model";
 import { ShadeApplier } from "./shade-applier";
 
@@ -56,16 +55,7 @@ function StudioEnvironment({ intensity }: { intensity: number }) {
   return null;
 }
 
-function ViewFrame({ children }: { children: ReactNode }) {
-  const frame = useViewer((s) => s.frame);
-  const ref = useRef<THREE.Group>(null);
-
-  useEffect(() => {
-    ref.current?.scale.setScalar(frame / 100);
-  }, [frame]);
-
-  return <group ref={ref}>{children}</group>;
-}
+const DEMO_URL = "/objeto-1.glb";
 
 export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group | null> }) {
   const finishId = useViewer((s) => s.finishId);
@@ -106,19 +96,14 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
       />
       <directionalLight position={[-4.2, 2.8, 2.8]} intensity={0.55 * intensity} color="#c5d0e0" />
       <directionalLight position={[0.4, 3.6, -4.8]} intensity={0.7 * intensity} color="#b7c2d2" />
-      {modelKind === "file" && modelUrl && modelFormat ? (
-        <group ref={productRef}>
-          <LoadedModel url={modelUrl} format={modelFormat} extras={modelExtras} finishId={finishId} />
-        </group>
-      ) : (
-        <group ref={productRef}>
-          <ViewFrame>
-            <group position={[0, 0.08, 0]}>
-              <HeadphoneModel finishId={finishId} />
-            </group>
-          </ViewFrame>
-        </group>
-      )}
+      <group ref={productRef}>
+        <LoadedModel
+          url={modelKind === "file" && modelUrl ? modelUrl : DEMO_URL}
+          format={modelKind === "file" && modelFormat ? modelFormat : "glb"}
+          extras={modelKind === "file" ? modelExtras : null}
+          finishId={finishId}
+        />
+      </group>
       <ShadeApplier rootRef={productRef} />
       <group userData={{ studio: true }}>
         {shadeMode === "mesh" ? null : (

@@ -126,7 +126,7 @@ type ViewerState = {
 const emptyInspect = { parts: [] as ModelPart[], textures: [] as TextureAsset[], materials: [] as MaterialAsset[] };
 
 export const useViewer = create<ViewerState>((set, get) => ({
-  finishId: "polar",
+  finishId: "original",
   zoom: DEFAULT_ZOOM,
   intensity: LIGHT_PRESETS.estudio.intensity,
   warmth: LIGHT_PRESETS.estudio.warmth,
@@ -267,7 +267,7 @@ export const useViewer = create<ViewerState>((set, get) => ({
       modelExtras: null,
       modelStatus: "idle",
       modelError: null,
-      finishId: "polar",
+      finishId: "original",
       shadeMode: "material",
       resetToken: prev.resetToken + 1,
       zoom: DEFAULT_ZOOM,

@@ -4,7 +4,7 @@
 
 No es una tienda. No hay precios ni cuentas. El archivo se queda en el navegador: no se guarda en un servidor.
 
-La pieza de prueba se llama **objeto 1**.
+La pieza de prueba se llama **objeto 1**. Es la nave del archivo `Demo01`.
 
 ## Para qué sirve
 

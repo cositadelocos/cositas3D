@@ -82,7 +82,7 @@ export function CaptureBridge() {
     const target = new THREE.WebGLRenderTarget(w, h, {
       format: THREE.RGBAFormat,
       type: THREE.UnsignedByteType,
-      colorSpace: THREE.SRGBColorSpace,
+      ...(captureLook === "oscuro" ? {} : { colorSpace: THREE.SRGBColorSpace }),
       depthBuffer: true,
       stencilBuffer: false,
     });

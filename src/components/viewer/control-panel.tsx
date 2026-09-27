@@ -401,12 +401,12 @@ export function ControlPanel() {
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-1 rounded-lg bg-background p-1">
+        <div className="grid grid-cols-3 gap-1 rounded-lg bg-background p-1">
           <button
             type="button"
             onClick={() => setCaptureLook("vista")}
             className={cn(
-              "h-9 rounded-md text-xs font-medium",
+              "h-9 rounded-md px-1 text-xs font-medium",
               captureLook === "vista" ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
             )}
           >
@@ -416,17 +416,29 @@ export function ControlPanel() {
             type="button"
             onClick={() => setCaptureLook("plano")}
             className={cn(
-              "h-9 rounded-md text-xs font-medium",
+              "h-9 rounded-md px-1 text-xs font-medium",
               captureLook === "plano" ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
             )}
           >
             Color fiel
           </button>
+          <button
+            type="button"
+            onClick={() => setCaptureLook("oscuro")}
+            className={cn(
+              "h-9 rounded-md px-1 text-xs font-medium",
+              captureLook === "oscuro" ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
+            )}
+          >
+            Oscuro
+          </button>
         </div>
         <p className="text-xs text-subtle text-pretty">
           {captureLook === "plano"
             ? "La foto guarda el color del fondo tal cual lo elegiste, sin oscurecerlo."
-            : "La foto sale con el mismo color que estás viendo en pantalla."}{" "}
+            : captureLook === "oscuro"
+              ? "El modo de antes: aplasta el fondo y deja los brillos fuertes."
+              : "La foto sale con el mismo color que estás viendo en pantalla."}{" "}
           {captureFormat === "png"
             ? shadeMode === "mesh"
               ? "PNG con fondo transparente: solo las líneas de la malla."

@@ -75,6 +75,8 @@ type ViewerState = {
   capturePreview: { url: string; filename: string; mime: string } | null;
   explode: number;
   explodeAxes: Record<ExplodeAxis, boolean>;
+  lift: number;
+  showFloor: boolean;
   exportToken: number;
   exportFormat: ExportFormat;
   exportNote: string | null;
@@ -85,6 +87,7 @@ type ViewerState = {
   modelExtras: Record<string, string> | null;
   modelStatus: ModelStatus;
   modelError: string | null;
+  modelBytes: number | null;
   sourceSize: SourceSize | null;
   frame: number;
   parts: ModelPart[];
@@ -110,6 +113,8 @@ type ViewerState = {
   setCaptureFormat: (format: CaptureFormat) => void;
   setCaptureSize: (size: CaptureSize) => void;
   setExplode: (value: number) => void;
+  setLift: (value: number) => void;
+  setShowFloor: (value: boolean) => void;
   toggleExplodeAxis: (axis: ExplodeAxis) => void;
   requestExport: (format: ExportFormat) => void;
   setExportNote: (note: string | null) => void;
@@ -147,6 +152,8 @@ export const useViewer = create<ViewerState>((set, get) => ({
   capturePreview: null,
   explode: 0,
   explodeAxes: { x: true, y: true, z: true },
+  lift: 0,
+  showFloor: true,
   exportToken: 0,
   exportFormat: "glb",
   exportNote: null,
@@ -157,6 +164,7 @@ export const useViewer = create<ViewerState>((set, get) => ({
   modelExtras: null,
   modelStatus: "idle",
   modelError: null,
+  modelBytes: null,
   sourceSize: null,
   frame: 100,
   parts: [],
@@ -200,6 +208,8 @@ export const useViewer = create<ViewerState>((set, get) => ({
   setCaptureFormat: (captureFormat) => set({ captureFormat }),
   setCaptureSize: (captureSize) => set({ captureSize }),
   setExplode: (explode) => set({ explode }),
+  setLift: (lift) => set({ lift }),
+  setShowFloor: (showFloor) => set({ showFloor }),
   toggleExplodeAxis: (axis) =>
     set((state) => ({
       explodeAxes: { ...state.explodeAxes, [axis]: !state.explodeAxes[axis] },
@@ -236,10 +246,12 @@ export const useViewer = create<ViewerState>((set, get) => ({
       modelExtras: Object.keys(extraUrls).length ? extraUrls : null,
       modelStatus: "loading",
       modelError: null,
+      modelBytes: primary.size,
       finishId: "original",
       shadeMode: "material",
       hiddenPartIds: [],
       explode: 0,
+      lift: 0,
       frame: 100,
       sourceSize: null,
       ...emptyInspect,
@@ -275,8 +287,10 @@ export const useViewer = create<ViewerState>((set, get) => ({
       viewFace: "orbit",
       hiddenPartIds: [],
       explode: 0,
+      lift: 0,
       frame: 100,
       sourceSize: null,
+      modelBytes: null,
       ...emptyInspect,
     });
   },

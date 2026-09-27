@@ -68,6 +68,7 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
   const modelFormat = useViewer((s) => s.modelFormat);
   const modelExtras = useViewer((s) => s.modelExtras);
   const shadeMode = useViewer((s) => s.shadeMode);
+  const showFloor = useViewer((s) => s.showFloor);
   const sceneId = useViewer((s) => s.sceneId);
   const sceneColor = useViewer((s) => s.sceneColor);
   const look = useMemo(() => getSceneLook(sceneId, sceneColor), [sceneId, sceneColor]);
@@ -106,7 +107,7 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
       </group>
       <ShadeApplier rootRef={productRef} />
       <group userData={{ studio: true }}>
-        {shadeMode === "mesh" ? null : (
+        {showFloor && shadeMode !== "mesh" ? (
           <ContactShadows
             position={[0, -0.5, 0]}
             opacity={0.45}
@@ -116,11 +117,13 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
             resolution={256}
             color={look.shadow}
           />
-        )}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.502, 0]} receiveShadow>
-          <circleGeometry args={[11, 64]} />
-          <meshStandardMaterial color={look.floor} roughness={0.9} metalness={0.08} />
-        </mesh>
+        ) : null}
+        {showFloor ? (
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.502, 0]} receiveShadow>
+            <circleGeometry args={[11, 64]} />
+            <meshStandardMaterial color={look.floor} roughness={0.9} metalness={0.08} />
+          </mesh>
+        ) : null}
         <mesh position={[0, 2.6, -6.5]} receiveShadow>
           <planeGeometry args={[30, 16]} />
           <meshStandardMaterial color={look.wall} roughness={1} metalness={0} />

@@ -19,6 +19,10 @@ export function InspectPanel() {
   const setExplode = useViewer((s) => s.setExplode);
   const explodeAxes = useViewer((s) => s.explodeAxes);
   const toggleExplodeAxis = useViewer((s) => s.toggleExplodeAxis);
+  const lift = useViewer((s) => s.lift);
+  const setLift = useViewer((s) => s.setLift);
+  const showFloor = useViewer((s) => s.showFloor);
+  const setShowFloor = useViewer((s) => s.setShowFloor);
   const visibleCount = parts.filter((part) => !hiddenPartIds.includes(part.id)).length;
 
   return (
@@ -59,6 +63,31 @@ export function InspectPanel() {
           onValueChange={(v) => setExplode(v[0] ?? 0)}
           aria-label="Separación del despiece"
         />
+        <div className="mt-4">
+          <div className="mb-2 flex items-baseline justify-between gap-3">
+            <h3 className="text-xs font-medium tracking-wide text-muted-foreground">Altura</h3>
+            <p className="text-xs text-muted-foreground">{Math.round(lift)}%</p>
+          </div>
+          <Slider
+            min={0}
+            max={100}
+            step={1}
+            value={[lift]}
+            onValueChange={(v) => setLift(v[0] ?? 0)}
+            aria-label="Subir el objeto en Y"
+          />
+          <p className="mt-2 text-xs text-subtle text-pretty">
+            Sube todo el objeto en Y para que el despiece no se meta en el suelo.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-3 w-full"
+          onClick={() => setShowFloor(!showFloor)}
+        >
+          {showFloor ? "Quitar suelo" : "Poner suelo"}
+        </Button>
       </div>
 
       <div>

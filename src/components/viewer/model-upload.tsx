@@ -6,6 +6,12 @@ import { ACCEPT_ATTR, formatLabel } from "@/lib/model-files";
 import { cn } from "@/lib/utils";
 import { useViewer } from "@/lib/viewer-store";
 
+function formatBytes(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  const mb = bytes / (1024 * 1024);
+  return mb >= 10 ? `${mb.toFixed(1)} MB` : `${mb.toFixed(2)} MB`;
+}
+
 function fmt(value: number) {
   if (!Number.isFinite(value)) return "—";
   if (value >= 100) return value.toFixed(1);
@@ -23,6 +29,7 @@ export function ModelUpload() {
   const modelStatus = useViewer((s) => s.modelStatus);
   const modelError = useViewer((s) => s.modelError);
   const sourceSize = useViewer((s) => s.sourceSize);
+  const modelBytes = useViewer((s) => s.modelBytes);
 
   const onFiles = (list: FileList | File[] | null) => {
     if (!list || (Array.isArray(list) ? list.length === 0 : list.length === 0)) return;
@@ -81,8 +88,9 @@ export function ModelUpload() {
 
       {modelKind === "file" ? (
         <div className="flex items-center justify-between gap-3">
-          <p className="truncate text-xs text-muted-foreground" title={modelName}>
+          <p className="min-w-0 truncate text-xs text-muted-foreground" title={modelName}>
             {modelName}
+            {modelBytes != null ? ` · ${formatBytes(modelBytes)}` : ""}
           </p>
           <Button type="button" variant="ghost" size="sm" onClick={restoreDemo}>
             Volver a {DEMO_OBJECT_NAME}

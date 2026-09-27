@@ -30,10 +30,15 @@ function measureAndCenter(content: THREE.Object3D) {
   return { x: _size.x, y: _size.y, z: _size.z };
 }
 
-function applyViewFit(view: THREE.Object3D, size: { x: number; y: number; z: number }, frame: number) {
+function applyViewFit(
+  view: THREE.Object3D,
+  size: { x: number; y: number; z: number },
+  frame: number,
+  lift: number,
+) {
   const maxDim = Math.max(size.x, size.y, size.z, 1e-4);
   view.scale.setScalar((TARGET_SIZE / maxDim) * (frame / 100));
-  view.position.set(0, FLOOR_Y, 0);
+  view.position.set(0, FLOOR_Y + (lift / 100) * 2.4, 0);
 }
 
 function toMillimeters(root: THREE.Object3D, format: ModelFormat) {
@@ -217,6 +222,7 @@ export function LoadedModel({
   const setSourceSize = useViewer((s) => s.setSourceSize);
   const resetCamera = useViewer((s) => s.resetCamera);
   const frame = useViewer((s) => s.frame);
+  const lift = useViewer((s) => s.lift);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,7 +244,7 @@ export function LoadedModel({
         const view = groupRef.current;
         if (view) {
           view.add(source);
-          if (size) applyViewFit(view, size, useViewer.getState().frame);
+          if (size) applyViewFit(view, size, useViewer.getState().frame, useViewer.getState().lift);
         }
         applyFinish(root, useViewer.getState().finishId);
         objectRef.current = source;
@@ -272,8 +278,8 @@ export function LoadedModel({
   useEffect(() => {
     const view = groupRef.current;
     const size = sizeRef.current;
-    if (view && size) applyViewFit(view, size, frame);
-  }, [frame]);
+    if (view && size) applyViewFit(view, size, frame, lift);
+  }, [frame, lift]);
 
   useEffect(() => {
     const current = objectRef.current;

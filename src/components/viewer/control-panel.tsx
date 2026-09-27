@@ -70,6 +70,8 @@ export function ControlPanel() {
   const requestCapture = useViewer((s) => s.requestCapture);
   const captureFormat = useViewer((s) => s.captureFormat);
   const setCaptureFormat = useViewer((s) => s.setCaptureFormat);
+  const captureLook = useViewer((s) => s.captureLook);
+  const setCaptureLook = useViewer((s) => s.setCaptureLook);
   const captureSize = useViewer((s) => s.captureSize);
   const setCaptureSize = useViewer((s) => s.setCaptureSize);
   const requestExport = useViewer((s) => s.requestExport);
@@ -228,14 +230,14 @@ export function ControlPanel() {
 
       <div className="space-y-4">
         <h2 className="text-sm font-medium">Iluminación</h2>
-        <div className="grid grid-cols-4 gap-1 rounded-lg bg-background p-1">
+        <div className="grid grid-cols-2 gap-1 rounded-lg bg-background p-1">
           {(Object.keys(LIGHT_PRESETS) as LightPresetId[]).map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => setPreset(id)}
               className={cn(
-                "h-9 rounded-md px-1 text-xs font-medium transition-[background-color,color] duration-[var(--motion-quick)] ease-[var(--ease-out)]",
+                "h-9 rounded-md px-2 text-xs font-medium transition-[background-color,color] duration-[var(--motion-quick)] ease-[var(--ease-out)]",
                 preset === id
                   ? "bg-card text-foreground shadow-border"
                   : "text-muted-foreground hover:text-foreground",
@@ -245,6 +247,7 @@ export function ControlPanel() {
             </button>
           ))}
         </div>
+        <p className="text-xs text-subtle text-pretty">{LIGHT_PRESETS[preset].note}</p>
         <Field label="Intensidad" value={`${Math.round(intensity * 100)}%`}>
           <Slider
             min={0.2}
@@ -398,12 +401,37 @@ export function ControlPanel() {
             </button>
           ))}
         </div>
+        <div className="grid grid-cols-2 gap-1 rounded-lg bg-background p-1">
+          <button
+            type="button"
+            onClick={() => setCaptureLook("vista")}
+            className={cn(
+              "h-9 rounded-md text-xs font-medium",
+              captureLook === "vista" ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
+            )}
+          >
+            Como se ve
+          </button>
+          <button
+            type="button"
+            onClick={() => setCaptureLook("plano")}
+            className={cn(
+              "h-9 rounded-md text-xs font-medium",
+              captureLook === "plano" ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
+            )}
+          >
+            Color fiel
+          </button>
+        </div>
         <p className="text-xs text-subtle text-pretty">
+          {captureLook === "plano"
+            ? "La foto guarda el color del fondo tal cual lo elegiste, sin oscurecerlo."
+            : "La foto sale con el mismo color que estás viendo en pantalla."}{" "}
           {captureFormat === "png"
             ? shadeMode === "mesh"
-              ? "PNG grande, fondo transparente: solo las líneas de la malla."
-              : "PNG grande, fondo transparente: el objeto con su material, sin el estudio."
-            : "JPEG del encuadre completo, con el estudio detrás."}
+              ? "PNG con fondo transparente: solo las líneas de la malla."
+              : "PNG con fondo transparente: el objeto, sin el estudio."
+            : "JPEG con el estudio detrás."}
         </p>
       </div>
 

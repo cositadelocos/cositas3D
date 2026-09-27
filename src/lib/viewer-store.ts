@@ -7,10 +7,16 @@ import { SCENES, type SceneId } from "@/lib/scenes";
 import type { ShadeMode } from "@/lib/shade";
 
 export const LIGHT_PRESETS = {
-  estudio: { label: "Estudio", intensity: 0.86, warmth: 0.26, env: 0.7 },
-  galeria: { label: "Galería", intensity: 0.72, warmth: 0.64, env: 0.46 },
-  foco: { label: "Foco", intensity: 1, warmth: 0.38, env: 0.2 },
-  alba: { label: "Alba", intensity: 0.58, warmth: 0.14, env: 0.92 },
+  estudio: { label: "Estudio", note: "Tres puntos suaves", intensity: 0.86, warmth: 0.26, env: 0.7 },
+  beauty: { label: "Beauty", note: "Frente amplio, poca sombra", intensity: 0.8, warmth: 0.2, env: 0.85 },
+  drama: { label: "Drama", note: "Un foco duro y un borde", intensity: 0.95, warmth: 0.18, env: 0.22 },
+  contraluz: { label: "Contraluz", note: "Luz atrás, el borde brilla", intensity: 0.9, warmth: 0.15, env: 0.28 },
+  ventana: { label: "Ventana", note: "Lateral fría, como un día nublado", intensity: 0.78, warmth: 0.12, env: 0.95 },
+  geles: { label: "Geles", note: "Cian de un lado, magenta del otro", intensity: 0.9, warmth: 0.2, env: 0.35 },
+  neon: { label: "Neón", note: "Verde y violeta bajos", intensity: 0.88, warmth: 0.1, env: 0.25 },
+  atardecer: { label: "Atardecer", note: "Sol bajo y una sombra larga", intensity: 0.84, warmth: 0.7, env: 0.4 },
+  nocturna: { label: "Nocturna", note: "Casi a oscuras, un recorte", intensity: 1, warmth: 0.08, env: 0.12 },
+  anillo: { label: "Anillo", note: "Luz pareja alrededor del objeto", intensity: 0.74, warmth: 0.22, env: 0.8 },
 } as const;
 
 export type LightPresetId = keyof typeof LIGHT_PRESETS;
@@ -19,6 +25,7 @@ export type ModelStatus = "idle" | "loading" | "ready" | "error";
 export type AnimMode = "none" | "turntable" | "oscillate" | "hopspin";
 export type ExportFormat = "glb" | "gltf" | "stl" | "obj";
 export type CaptureFormat = "png" | "jpeg";
+export type CaptureLook = "vista" | "plano";
 export type CaptureSize = "vista" | "2k" | "4k";
 export type SourceSize = { x: number; y: number; z: number };
 export type ExplodeAxis = "x" | "y" | "z";
@@ -59,7 +66,7 @@ type ViewerState = {
   intensity: number;
   warmth: number;
   env: number;
-  preset: LightPresetId | "custom";
+  preset: LightPresetId;
   sceneId: SceneId | "custom";
   sceneColor: string;
   shadeMode: ShadeMode;
@@ -71,6 +78,7 @@ type ViewerState = {
   captureToken: number;
   capturedAt: number;
   captureFormat: CaptureFormat;
+  captureLook: CaptureLook;
   captureSize: CaptureSize;
   capturePreview: { url: string; filename: string; mime: string } | null;
   explode: number;
@@ -111,6 +119,7 @@ type ViewerState = {
   markCaptured: () => void;
   setCapturePreview: (preview: { url: string; filename: string; mime: string } | null) => void;
   setCaptureFormat: (format: CaptureFormat) => void;
+  setCaptureLook: (look: CaptureLook) => void;
   setCaptureSize: (size: CaptureSize) => void;
   setExplode: (value: number) => void;
   setLift: (value: number) => void;
@@ -148,6 +157,7 @@ export const useViewer = create<ViewerState>((set, get) => ({
   captureToken: 0,
   capturedAt: 0,
   captureFormat: "png",
+  captureLook: "vista",
   captureSize: "2k",
   capturePreview: null,
   explode: 0,
@@ -173,9 +183,9 @@ export const useViewer = create<ViewerState>((set, get) => ({
   materials: [],
   setFinish: (finishId) => set({ finishId }),
   setZoom: (zoom) => set({ zoom }),
-  setIntensity: (intensity) => set({ intensity, preset: "custom" }),
-  setWarmth: (warmth) => set({ warmth, preset: "custom" }),
-  setEnv: (env) => set({ env, preset: "custom" }),
+  setIntensity: (intensity) => set({ intensity }),
+  setWarmth: (warmth) => set({ warmth }),
+  setEnv: (env) => set({ env }),
   setPreset: (preset) =>
     set({
       preset,
@@ -206,6 +216,7 @@ export const useViewer = create<ViewerState>((set, get) => ({
     set({ capturePreview, capturedAt: capturePreview ? Date.now() : get().capturedAt });
   },
   setCaptureFormat: (captureFormat) => set({ captureFormat }),
+  setCaptureLook: (captureLook) => set({ captureLook }),
   setCaptureSize: (captureSize) => set({ captureSize }),
   setExplode: (explode) => set({ explode }),
   setLift: (lift) => set({ lift }),

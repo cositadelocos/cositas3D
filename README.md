@@ -65,7 +65,7 @@ Separa las **partes** desde el centro del objeto.
 
 ## Qué se puede subir
 
-Máximo **50 MB**.
+Máximo **100 MB**.
 
 | Formato | Qué trae |
 |---|---|

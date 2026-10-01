@@ -3,7 +3,7 @@ export type ModelFormat = (typeof ACCEPTED_MODEL_EXT)[number];
 
 export const ACCEPT_ATTR =
   ".glb,.gltf,.fbx,.obj,.stl,.3ds,model/gltf-binary,model/gltf+json,application/octet-stream";
-export const MAX_MODEL_BYTES = 50 * 1024 * 1024;
+export const MAX_MODEL_BYTES = 100 * 1024 * 1024;
 
 const PRIMARY_ORDER: ModelFormat[] = ["glb", "gltf", "fbx", "obj", "stl", "3ds"];
 
@@ -56,7 +56,7 @@ export function classifyModelFiles(files: File[]): { ok: true; value: Classified
     const mb = (primary.size / (1024 * 1024)).toFixed(1);
     return {
       ok: false,
-      error: `No se cargó porque pesa ${mb} MB. El límite es 50 MB.`,
+      error: `No se cargó porque pesa ${mb} MB. El límite es 100 MB.`,
     };
   }
 

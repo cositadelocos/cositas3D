@@ -260,6 +260,7 @@ export const useViewer = create<ViewerState>((set, get) => ({
       modelBytes: primary.size,
       finishId: "original",
       shadeMode: "material",
+      animMode: "none",
       hiddenPartIds: [],
       explode: 0,
       lift: 0,

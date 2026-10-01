@@ -55,15 +55,21 @@ function toMillimeters(root: THREE.Object3D, format: ModelFormat) {
 }
 
 function prepareMeshes(root: THREE.Object3D) {
+  const meshes: THREE.Mesh[] = [];
   root.traverse((child) => {
     const mesh = child as THREE.Mesh;
     if (!mesh.isMesh) return;
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
+    meshes.push(mesh);
     if (mesh.geometry && !mesh.geometry.getAttribute("normal")) {
       mesh.geometry.computeVertexNormals();
     }
   });
+  const many = meshes.length > 80;
+  for (const mesh of meshes) {
+    mesh.castShadow = !many;
+    mesh.receiveShadow = !many && meshes.length < 40;
+    mesh.frustumCulled = true;
+  }
 }
 
 function disposeObject(root: THREE.Object3D) {

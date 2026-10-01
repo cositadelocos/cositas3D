@@ -1,5 +1,5 @@
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, GizmoHelper, GizmoViewport } from "@react-three/drei";
+import { OrbitControls, GizmoHelper, GizmoViewport, AdaptiveDpr } from "@react-three/drei";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
 import { CAMERA, VIEW_DIRS, distanceToZoom, viewSpan, zoomToDistance } from "@/lib/camera";
@@ -96,6 +96,7 @@ function Stage() {
 
   return (
     <>
+      <AdaptiveDpr />
       <StudioScene productRef={productRef} />
       <ModelAnimator rootRef={productRef} />
       <ExplodeApplier rootRef={productRef} />
@@ -147,12 +148,10 @@ export function ProductCanvas() {
     <Canvas
       className="touch-none"
       shadows
-      dpr={
-        window.matchMedia("(pointer: coarse)").matches ? [1, 1.15] : [1, 1.5]
-      }
+      dpr={window.matchMedia("(pointer: coarse)").matches ? [1, 1.1] : [1, 1.25]}
       camera={{ position: [...CAMERA.position], fov: CAMERA.fov, near: 0.1, far: 40 }}
       gl={{
-        antialias: true,
+        antialias: !window.matchMedia("(pointer: coarse)").matches,
         alpha: false,
         preserveDrawingBuffer: false,
         powerPreference: "high-performance",

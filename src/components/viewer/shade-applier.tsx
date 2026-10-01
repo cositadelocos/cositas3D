@@ -1,4 +1,3 @@
-import { useFrame } from "@react-three/fiber";
 import { useEffect, type RefObject } from "react";
 import type * as THREE from "three";
 import { applyShade } from "@/lib/shade";
@@ -15,12 +14,6 @@ export function ShadeApplier({ rootRef }: { rootRef: RefObject<THREE.Group | nul
     const root = rootRef.current;
     if (root) applyShade(root, shadeMode, meshColor);
   }, [shadeMode, meshColor, modelStatus, modelUrl, finishId, rootRef]);
-
-  useFrame(() => {
-    if (shadeMode === "material") return;
-    const root = rootRef.current;
-    if (root) applyShade(root, shadeMode, meshColor);
-  });
 
   return null;
 }

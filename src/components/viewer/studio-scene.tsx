@@ -214,6 +214,8 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
   const modelExtras = useViewer((s) => s.modelExtras);
   const shadeMode = useViewer((s) => s.shadeMode);
   const showFloor = useViewer((s) => s.showFloor);
+  const animMode = useViewer((s) => s.animMode);
+  const explode = useViewer((s) => s.explode);
   const sceneId = useViewer((s) => s.sceneId);
   const sceneColor = useViewer((s) => s.sceneColor);
   const look = useMemo(() => getSceneLook(sceneId, sceneColor), [sceneId, sceneColor]);
@@ -233,8 +235,9 @@ export function StudioScene({ productRef }: { productRef: RefObject<THREE.Group 
       </group>
       <ShadeApplier rootRef={productRef} />
       <group userData={{ studio: true }}>
-        {showFloor && shadeMode !== "mesh" ? (
+        {showFloor && shadeMode !== "mesh" && animMode === "none" && explode === 0 ? (
           <ContactShadows
+            frames={1}
             position={[0, -0.5, 0]}
             opacity={0.45}
             scale={8}

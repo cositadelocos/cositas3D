@@ -38,10 +38,10 @@ function shiftOnAxis(parts: Bucket[], axis: "x" | "y" | "z", reach: number, mode
   ordered.forEach((part, index) => {
     if (flat) {
       const t = ordered.length === 1 ? 0 : index / (ordered.length - 1) - 0.5;
-      shifts.set(part.id, t * 2 * reach);
+      shifts.set(part.id, t * 2.4 * reach);
       return;
     }
-    shifts.set(part.id, (part.center[axis] - _center[axis]) * amount);
+    shifts.set(part.id, (part.center[axis] - _center[axis]) * amount * 2.8);
   });
   return shifts;
 }
@@ -89,7 +89,7 @@ export function ExplodeApplier({ rootRef }: { rootRef: RefObject<THREE.Group | n
     _box.getCenter(_center);
     _box.getSize(_size);
     const modelSize = Math.max(_size.x, _size.y, _size.z, 1e-4);
-    const reach = modelSize * amount * 0.55;
+    const reach = modelSize * amount * 1.7;
 
     const groups = new Map<string, THREE.Mesh[]>();
     for (const mesh of meshes) {

@@ -17,6 +17,12 @@ export const LIGHT_PRESETS = {
   atardecer: { label: "Atardecer", note: "Sol bajo y una sombra larga", intensity: 0.84, warmth: 0.7, env: 0.4 },
   nocturna: { label: "Nocturna", note: "Casi a oscuras, un recorte", intensity: 1, warmth: 0.08, env: 0.12 },
   anillo: { label: "Anillo", note: "Luz pareja alrededor del objeto", intensity: 0.74, warmth: 0.22, env: 0.8 },
+  cyber: { label: "Cyber", note: "Cian de frente, violeta de borde", intensity: 0.92, warmth: 0.08, env: 0.3 },
+  fuego: { label: "Fuego", note: "Naranja bajo, como un horno", intensity: 0.9, warmth: 0.85, env: 0.28 },
+  luna: { label: "Luna", note: "Plata alta, fría y limpia", intensity: 0.78, warmth: 0.05, env: 0.55 },
+  disco: { label: "Disco", note: "Magenta y amarillo de fiesta", intensity: 0.9, warmth: 0.35, env: 0.32 },
+  aurora: { label: "Aurora", note: "Verde y azul del norte", intensity: 0.86, warmth: 0.1, env: 0.38 },
+  rayo: { label: "Rayo", note: "Un flash duro de frente", intensity: 1, warmth: 0.12, env: 0.18 },
 } as const;
 
 export type LightPresetId = keyof typeof LIGHT_PRESETS;

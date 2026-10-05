@@ -8,17 +8,6 @@ import { getSceneLook } from "@/lib/scenes";
 import { LoadedModel } from "./loaded-model";
 import { ShadeApplier } from "./shade-applier";
 
-const SHADOW = {
-  "shadow-mapSize": [512, 512] as [number, number],
-  "shadow-camera-near": 1,
-  "shadow-camera-far": 20,
-  "shadow-camera-left": -5,
-  "shadow-camera-right": 5,
-  "shadow-camera-top": 5,
-  "shadow-camera-bottom": -5,
-  "shadow-bias": -0.0003,
-};
-
 function tint(hex: string, warmth: number, allow: boolean) {
   if (!allow) return hex;
   return `#${new THREE.Color(hex).lerp(new THREE.Color("#ffc48a"), warmth * 0.7).getHexString()}`;
@@ -36,62 +25,13 @@ function RigLights({
   const k = intensity;
   const white = tint("#f4f6fa", warmth, rig === "estudio" || rig === "beauty" || rig === "anillo");
 
-  if (rig === "beauty") {
-    return (
-      <>
-        <hemisphereLight args={["#fff8f2", "#d9d3cc", 0.7 * k]} />
-        <ambientLight intensity={0.42 * k} />
-        <directionalLight castShadow position={[0.2, 4.2, 6.2]} intensity={1.55 * k} color={white} {...SHADOW} />
-        <directionalLight position={[-3.2, 3, 4]} intensity={1.05 * k} color={white} />
-        <directionalLight position={[3.2, 2.6, 4]} intensity={0.95 * k} color={white} />
-        <directionalLight position={[0, 5, -3]} intensity={0.3 * k} color="#ffffff" />
-      </>
-    );
-  }
-
-  if (rig === "drama") {
-    return (
-      <>
-        <hemisphereLight args={["#c9d4e4", "#1a1c20", 0.12 * k]} />
-        <ambientLight intensity={0.05 * k} />
-        <directionalLight castShadow position={[6.5, 3.2, 1.2]} intensity={3.2 * k} color="#f7f8fb" {...SHADOW} />
-        <directionalLight position={[-2.2, 4.2, -5.2]} intensity={1.7 * k} color="#9eb4d0" />
-        <directionalLight position={[-2, 1.2, 4.5]} intensity={0.16 * k} color="#ffffff" />
-      </>
-    );
-  }
-
-  if (rig === "contraluz") {
-    return (
-      <>
-        <hemisphereLight args={["#d5deea", "#20242c", 0.16 * k]} />
-        <ambientLight intensity={0.06 * k} />
-        <directionalLight castShadow position={[0.4, 4.6, -6.2]} intensity={3.3 * k} color="#f3f6fb" {...SHADOW} />
-        <directionalLight position={[-4.2, 3.2, -2]} intensity={1.35 * k} color="#b9c7dc" />
-        <directionalLight position={[0, 2.2, 5.4]} intensity={0.32 * k} color="#ffffff" />
-      </>
-    );
-  }
-
-  if (rig === "ventana") {
-    return (
-      <>
-        <hemisphereLight args={["#e7f1ff", "#c8b8a4", 0.5 * k]} />
-        <ambientLight intensity={0.16 * k} />
-        <directionalLight castShadow position={[-6.2, 4.6, 2]} intensity={2.5 * k} color="#d7e7ff" {...SHADOW} />
-        <directionalLight position={[3.4, 1.4, 2.2]} intensity={0.48 * k} color="#ffe4cc" />
-      </>
-    );
-  }
-
   if (rig === "geles") {
     return (
       <>
-        <hemisphereLight args={["#d8ecff", "#2a1424", 0.18 * k]} />
-        <ambientLight intensity={0.06 * k} />
-        <directionalLight castShadow position={[5.6, 3.1, 2]} intensity={2.7 * k} color="#3ad7ff" {...SHADOW} />
-        <directionalLight position={[-5.2, 2.4, 1.6]} intensity={2.45 * k} color="#ff3dbe" />
-        <directionalLight position={[0, 6.2, 0.4]} intensity={0.35 * k} color="#ffffff" />
+        <hemisphereLight args={["#d8ecff", "#2a1424", 0.22 * k]} />
+        <ambientLight intensity={0.12 * k} />
+        <directionalLight position={[5.2, 3.1, 2]} intensity={2.4 * k} color="#3ad7ff" />
+        <directionalLight position={[-5, 2.4, 1.6]} intensity={2.2 * k} color="#ff3dbe" />
       </>
     );
   }
@@ -99,67 +39,67 @@ function RigLights({
   if (rig === "neon") {
     return (
       <>
-        <hemisphereLight args={["#1c2430", "#10140f", 0.08 * k]} />
-        <ambientLight intensity={0.04 * k} />
-        <directionalLight castShadow position={[-2.2, 0.8, 4.2]} intensity={2.9 * k} color="#39ff9a" {...SHADOW} />
-        <directionalLight position={[3.6, 2.4, -2.2]} intensity={2.2 * k} color="#9b5cff" />
-        <directionalLight position={[0.2, 5, -4]} intensity={0.85 * k} color="#ff4ad2" />
+        <hemisphereLight args={["#1c2430", "#10140f", 0.12 * k]} />
+        <ambientLight intensity={0.08 * k} />
+        <directionalLight position={[-2.2, 1.2, 4.2]} intensity={2.6 * k} color="#39ff9a" />
+        <directionalLight position={[3.6, 2.4, -2.2]} intensity={2 * k} color="#9b5cff" />
       </>
     );
   }
 
-  if (rig === "atardecer") {
+  if (rig === "disco") {
     return (
       <>
-        <hemisphereLight args={["#ffd0b0", "#3a2218", 0.32 * k]} />
-        <ambientLight intensity={0.08 * k} color="#ffb080" />
-        <directionalLight castShadow position={[-0.6, 1.35, 5.4]} intensity={2.8 * k} color="#ff8a3d" {...SHADOW} />
-        <directionalLight position={[4.2, 3.2, -2]} intensity={0.75 * k} color="#7aa0ff" />
+        <hemisphereLight args={["#ffd0ea", "#241018", 0.2 * k]} />
+        <ambientLight intensity={0.1 * k} />
+        <directionalLight position={[4.8, 3.4, 2.2]} intensity={2.5 * k} color="#ff3dbe" />
+        <directionalLight position={[-4.6, 2.2, 1.4]} intensity={2.2 * k} color="#ffe14a" />
       </>
     );
   }
 
-  if (rig === "nocturna") {
+  if (rig === "aurora") {
     return (
       <>
-        <hemisphereLight args={["#1a2740", "#0c0e12", 0.06 * k]} />
-        <ambientLight intensity={0.03 * k} />
-        <spotLight
-          castShadow
-          position={[1.2, 6.4, 2.2]}
-          angle={0.42}
-          penumbra={0.65}
-          intensity={18 * k}
-          color="#d5e2ff"
-          shadow-mapSize={[512, 512]}
-          shadow-bias={-0.0003}
-        />
-        <directionalLight position={[-3.2, 2.4, -4.2]} intensity={0.45 * k} color="#4466aa" />
+        <hemisphereLight args={["#c8fff0", "#102018", 0.22 * k]} />
+        <ambientLight intensity={0.1 * k} />
+        <directionalLight position={[-3.6, 5.2, 1.6]} intensity={2.4 * k} color="#3dffb0" />
+        <directionalLight position={[4.2, 2.8, -2]} intensity={2 * k} color="#4aa8ff" />
       </>
     );
   }
 
-  if (rig === "anillo") {
+  if (rig === "cyber") {
     return (
       <>
-        <hemisphereLight args={["#f7f7f5", "#d0d0cc", 0.55 * k]} />
-        <ambientLight intensity={0.32 * k} />
-        <directionalLight position={[4, 2.2, 2]} intensity={0.75 * k} color={white} />
-        <directionalLight position={[-4, 2.2, 2]} intensity={0.75 * k} color={white} />
-        <directionalLight position={[0, 2.2, 4.5]} intensity={0.7 * k} color={white} />
-        <directionalLight position={[0, 2.4, -4.5]} intensity={0.55 * k} color={white} />
-        <directionalLight castShadow position={[0.2, 6, 1]} intensity={0.7 * k} color={white} {...SHADOW} />
+        <hemisphereLight args={["#c8f0ff", "#14081c", 0.18 * k]} />
+        <ambientLight intensity={0.1 * k} />
+        <directionalLight position={[2.4, 4.2, 5.4]} intensity={2.5 * k} color="#3ad7ff" />
+        <directionalLight position={[-3.8, 3.2, -3.6]} intensity={2.1 * k} color="#9b5cff" />
       </>
     );
   }
+
+  const looks: Record<string, { hemi: [string, string, number]; ambient: number; pos: [number, number, number]; color: string; key: number }> = {
+    beauty: { hemi: ["#fff8f2", "#d9d3cc", 0.7], ambient: 0.45, pos: [0.2, 4.2, 6.2], color: white, key: 2.1 },
+    drama: { hemi: ["#c9d4e4", "#1a1c20", 0.16], ambient: 0.08, pos: [6.5, 3.2, 1.2], color: "#f7f8fb", key: 3.2 },
+    contraluz: { hemi: ["#d5deea", "#20242c", 0.2], ambient: 0.1, pos: [0.4, 4.6, -6.2], color: "#f3f6fb", key: 3.1 },
+    ventana: { hemi: ["#e7f1ff", "#c8b8a4", 0.5], ambient: 0.2, pos: [-6.2, 4.6, 2], color: "#d7e7ff", key: 2.6 },
+    atardecer: { hemi: ["#ffd0b0", "#3a2218", 0.35], ambient: 0.12, pos: [-0.6, 1.4, 5.4], color: "#ff8a3d", key: 2.8 },
+    nocturna: { hemi: ["#1a2740", "#0c0e12", 0.1], ambient: 0.06, pos: [1.2, 6.2, 2.2], color: "#d5e2ff", key: 2.4 },
+    anillo: { hemi: ["#f7f7f5", "#d0d0cc", 0.6], ambient: 0.4, pos: [0.2, 6, 3], color: white, key: 1.8 },
+    fuego: { hemi: ["#ffc8a0", "#2a1008", 0.28], ambient: 0.1, pos: [1.2, 0.8, 4.4], color: "#ff6a22", key: 2.9 },
+    luna: { hemi: ["#dce8ff", "#12161e", 0.42], ambient: 0.16, pos: [-4.4, 6.4, 1.2], color: "#cddcff", key: 2.3 },
+    rayo: { hemi: ["#f4f6fa", "#1a1c20", 0.08], ambient: 0.04, pos: [0.4, 7.2, 3.2], color: "#ffffff", key: 3.6 },
+    estudio: { hemi: ["#e4e8f0", "#2a2622", 0.5], ambient: 0.28, pos: [3.6, 5.6, 4], color: white, key: 2.2 },
+  };
+  const look = looks[rig] ?? looks.estudio!;
 
   return (
     <>
-      <hemisphereLight args={["#e4e8f0", "#2a2622", 0.45 * k]} />
-      <ambientLight intensity={0.2 * k} />
-      <directionalLight castShadow position={[3.6, 5.6, 4]} intensity={2.05 * k} color={white} {...SHADOW} />
-      <directionalLight position={[-4.2, 2.8, 2.8]} intensity={0.55 * k} color="#c5d0e0" />
-      <directionalLight position={[0.4, 3.6, -4.8]} intensity={0.85 * k} color="#d5deea" />
+      <hemisphereLight args={[look.hemi[0], look.hemi[1], look.hemi[2] * k]} />
+      <ambientLight intensity={look.ambient * k} />
+      <directionalLight position={look.pos} intensity={look.key * k} color={look.color} />
     </>
   );
 }

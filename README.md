@@ -65,7 +65,7 @@ Separa las **partes** desde el centro del objeto.
 
 ## Qué se puede subir
 
-Máximo **100 MB**.
+Recomendado hasta **100 MB**. El navegador acepta hasta **1.5 GB**. Por encima de 100 MB entra igual, pero puede ir lento.
 
 | Formato | Qué trae |
 |---|---|

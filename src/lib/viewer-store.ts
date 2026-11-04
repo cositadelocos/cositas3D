@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { DEMO_OBJECT_NAME } from "@/lib/brand";
 import type { ViewFace } from "@/lib/camera";
 import type { MaterialAsset, ModelPart, TextureAsset } from "@/lib/inspect";
-import { classifyModelFiles, type ModelFormat } from "@/lib/model-files";
+import { classifyModelFiles, RECOMMENDED_MODEL_BYTES, type ModelFormat } from "@/lib/model-files";
 import { SCENES, type SceneId } from "@/lib/scenes";
 import type { ShadeMode } from "@/lib/shade";
 
@@ -241,7 +241,7 @@ export const useViewer = create<ViewerState>((set, get) => ({
   loadModelFromFiles: (files) => {
     const classified = classifyModelFiles(files);
     if (!classified.ok) {
-      const tooHeavy = classified.error.includes("El límite es 100 MB");
+      const tooHeavy = classified.error.includes("hasta 1.5 GB");
       set(tooHeavy ? { modelError: classified.error } : { modelStatus: "error", modelError: classified.error });
       return;
     }
@@ -262,11 +262,14 @@ export const useViewer = create<ViewerState>((set, get) => ({
       modelUrl: URL.createObjectURL(primary),
       modelExtras: Object.keys(extraUrls).length ? extraUrls : null,
       modelStatus: "loading",
-      modelError: null,
       modelBytes: primary.size,
       finishId: "original",
       shadeMode: "material",
       animMode: "none",
+      modelError:
+        primary.size > RECOMMENDED_MODEL_BYTES
+          ? `Pesa ${(primary.size / (1024 * 1024)).toFixed(0)} MB. 100 MB es solo una recomendación: entra igual, pero puede ir lento.`
+          : null,
       hiddenPartIds: [],
       explode: 0,
       lift: 0,
@@ -275,7 +278,16 @@ export const useViewer = create<ViewerState>((set, get) => ({
       ...emptyInspect,
     });
   },
-  setModelStatus: (modelStatus, modelError = null) => set({ modelStatus, modelError }),
+  setModelStatus: (modelStatus, modelError) =>
+    set((state) => ({
+      modelStatus,
+      modelError:
+        modelError !== undefined
+          ? modelError
+          : modelStatus === "error"
+            ? null
+            : state.modelError,
+    })),
   setSourceSize: (sourceSize) => set({ sourceSize }),
   setFrame: (frame) => set({ frame }),
   setInspect: ({ parts, textures, materials }) => set({ parts, textures, materials }),

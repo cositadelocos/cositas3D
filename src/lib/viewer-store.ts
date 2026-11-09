@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { DEMO_OBJECT_NAME } from "@/lib/brand";
-import type { ViewFace } from "@/lib/camera";
+import { DEFAULT_LENS, type LensId, type Projection, type ViewFace } from "@/lib/camera";
 import type { MaterialAsset, ModelPart, TextureAsset } from "@/lib/inspect";
 import { classifyModelFiles, RECOMMENDED_MODEL_BYTES, type ModelFormat } from "@/lib/model-files";
 import { SCENES, type SceneId } from "@/lib/scenes";
@@ -35,6 +35,8 @@ export type CaptureLook = "vista" | "plano" | "oscuro";
 export type CaptureSize = "vista" | "2k" | "4k";
 export type SourceSize = { x: number; y: number; z: number };
 export type ExplodeAxis = "x" | "y" | "z";
+
+export type FileClip = { name: string; duration: number };
 
 export const ANIM_MODES: { id: AnimMode; label: string }[] = [
   { id: "none", label: "Quieto" },
@@ -78,6 +80,13 @@ type ViewerState = {
   shadeMode: ShadeMode;
   meshColor: string;
   animMode: AnimMode;
+  projection: Projection;
+  lensId: LensId;
+  fileClips: FileClip[];
+  clipIndex: number;
+  clipPlaying: boolean;
+  clipLoop: boolean;
+  clipSpeed: number;
   viewFace: ViewFace | "orbit";
   viewToken: number;
   resetToken: number;
@@ -119,6 +128,13 @@ type ViewerState = {
   setShadeMode: (mode: ShadeMode) => void;
   setMeshColor: (color: string) => void;
   setAnimMode: (mode: AnimMode) => void;
+  setProjection: (projection: Projection) => void;
+  setLens: (lensId: LensId) => void;
+  setFileClips: (clips: FileClip[]) => void;
+  setClipIndex: (index: number) => void;
+  setClipPlaying: (playing: boolean) => void;
+  setClipLoop: (loop: boolean) => void;
+  setClipSpeed: (speed: number) => void;
   snapView: (face: ViewFace) => void;
   resetCamera: () => void;
   requestCapture: () => void;
@@ -157,6 +173,13 @@ export const useViewer = create<ViewerState>((set, get) => ({
   shadeMode: "material",
   meshColor: DEFAULT_MESH_COLOR,
   animMode: "turntable",
+  projection: "perspective",
+  lensId: DEFAULT_LENS,
+  fileClips: [],
+  clipIndex: 0,
+  clipPlaying: false,
+  clipLoop: true,
+  clipSpeed: 1,
   viewFace: "orbit",
   viewToken: 0,
   resetToken: 0,
@@ -207,6 +230,20 @@ export const useViewer = create<ViewerState>((set, get) => ({
   setShadeMode: (shadeMode) => set({ shadeMode }),
   setMeshColor: (meshColor) => set({ meshColor, shadeMode: "mesh" }),
   setAnimMode: (animMode) => set({ animMode }),
+  setProjection: (projection) => set({ projection }),
+  setLens: (lensId) => set({ lensId, projection: "perspective" }),
+  setFileClips: (fileClips) =>
+    set({
+      fileClips,
+      clipIndex: 0,
+      clipPlaying: fileClips.length > 0,
+      clipLoop: true,
+      clipSpeed: 1,
+    }),
+  setClipIndex: (clipIndex) => set({ clipIndex, clipPlaying: true }),
+  setClipPlaying: (clipPlaying) => set({ clipPlaying }),
+  setClipLoop: (clipLoop) => set({ clipLoop }),
+  setClipSpeed: (clipSpeed) => set({ clipSpeed }),
   snapView: (viewFace) => set((state) => ({ viewFace, viewToken: state.viewToken + 1, animMode: "none" })),
   resetCamera: () =>
     set((state) => ({
@@ -266,6 +303,9 @@ export const useViewer = create<ViewerState>((set, get) => ({
       finishId: "original",
       shadeMode: "material",
       animMode: "none",
+      fileClips: [],
+      clipIndex: 0,
+      clipPlaying: false,
       modelError:
         primary.size > RECOMMENDED_MODEL_BYTES
           ? `Pesa ${(primary.size / (1024 * 1024)).toFixed(0)} MB. 100 MB es solo una recomendación: entra igual, pero puede ir lento.`
@@ -321,6 +361,9 @@ export const useViewer = create<ViewerState>((set, get) => ({
       frame: 100,
       sourceSize: null,
       modelBytes: null,
+      fileClips: [],
+      clipIndex: 0,
+      clipPlaying: false,
       ...emptyInspect,
     });
   },

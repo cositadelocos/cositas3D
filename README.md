@@ -63,6 +63,12 @@ Separa las **partes** desde el centro del objeto.
 - En **Partes** se puede ocultar una pieza para ver las demás solas.
 - Si exportas con el despiece abierto, el archivo sale **ya separado**. El encuadre de la pantalla no se guarda.
 
+## Cámara y animación del archivo
+
+- **Perspectiva** es la vista de siempre. **Ortogonal** quita la fuga: las líneas paralelas siguen paralelas.
+- Los lentes son de fotograma completo (sensor de 24 mm): ojo de pez 8 mm, 14, 24, 35, 42, 50, 85, 135 y 200 mm. El 42 mm es el encuadre de antes.
+- Si el GLB o el FBX trae animación, aparece **Animación del archivo**: reproducir, pausa, bucle y velocidad. OBJ, STL y 3DS no traen animación.
+
 ## Qué se puede subir
 
 Recomendado hasta **100 MB**. El navegador acepta hasta **1.5 GB**. Por encima de 100 MB entra igual, pero puede ir lento.

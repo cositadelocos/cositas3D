@@ -168,7 +168,7 @@ function loadRoot(
   url: string,
   format: ModelFormat,
   extras: Record<string, string> | null,
-): Promise<THREE.Object3D> {
+): Promise<{ root: THREE.Object3D; clips: THREE.AnimationClip[] }> {
   const manager = createManager(extras);
 
   if (format === "stl") {
@@ -181,23 +181,23 @@ function loadRoot(
         roughness: 0.35,
         clearcoat: 0.2,
       });
-      return new THREE.Mesh(geometry, material);
+      return { root: new THREE.Mesh(geometry, material), clips: [] };
     });
   }
 
   if (format === "obj") {
     const loader = new OBJLoader(manager);
-    return loader.loadAsync(url);
+    return loader.loadAsync(url).then((root) => ({ root, clips: [] }));
   }
 
   if (format === "fbx") {
     const loader = new FBXLoader(manager);
-    return loader.loadAsync(url);
+    return loader.loadAsync(url).then((root) => ({ root, clips: root.animations ?? [] }));
   }
 
   if (format === "3ds") {
     const loader = new TDSLoader(manager);
-    return loader.loadAsync(url);
+    return loader.loadAsync(url).then((root) => ({ root, clips: [] }));
   }
 
   const loader = new GLTFLoader(manager);
@@ -206,7 +206,7 @@ function loadRoot(
   loader.setDRACOLoader(draco);
   return loader.loadAsync(url).then((gltf) => {
     draco.dispose();
-    return gltf.scene;
+    return { root: gltf.scene, clips: gltf.animations ?? [] };
   });
 }
 
@@ -226,6 +226,7 @@ export function LoadedModel({
   const sizeRef = useRef<{ x: number; y: number; z: number } | null>(null);
   const setModelStatus = useViewer((s) => s.setModelStatus);
   const setSourceSize = useViewer((s) => s.setSourceSize);
+  const setFileClips = useViewer((s) => s.setFileClips);
   const resetCamera = useViewer((s) => s.resetCamera);
   const frame = useViewer((s) => s.frame);
   const lift = useViewer((s) => s.lift);
@@ -235,7 +236,7 @@ export function LoadedModel({
     setModelStatus("loading");
 
     loadRoot(url, format, extras)
-      .then((root) => {
+      .then(({ root, clips }) => {
         if (cancelled) {
           disposeObject(root);
           return;
@@ -253,8 +254,16 @@ export function LoadedModel({
           if (size) applyViewFit(view, size, useViewer.getState().frame, useViewer.getState().lift);
         }
         applyFinish(root, useViewer.getState().finishId);
+        root.userData.clips = clips;
         objectRef.current = source;
         setSourceSize(size);
+        setFileClips(
+          clips.map((clip, index) => ({
+            name: clip.name.replace(/[_|]+/g, " ").trim() || `Clip ${index + 1}`,
+            duration: clip.duration,
+          })),
+        );
+        if (clips.length > 0) useViewer.getState().setAnimMode("none");
         setModelStatus("ready");
         resetCamera();
       })
@@ -279,7 +288,7 @@ export function LoadedModel({
         objectRef.current = null;
       }
     };
-  }, [url, format, extras, setModelStatus, setSourceSize, resetCamera]);
+  }, [url, format, extras, setModelStatus, setSourceSize, setFileClips, resetCamera]);
 
   useEffect(() => {
     const view = groupRef.current;

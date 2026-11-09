@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { InspectPanel } from "./inspect-panel";
 import { ModelUpload } from "./model-upload";
 import { APP_SUBTITLE, DEMO_OBJECT_NAME } from "@/lib/brand";
+import { LENSES, type LensId, type Projection } from "@/lib/camera";
 import { SCENES } from "@/lib/scenes";
 import { FINISHES, ORIGINAL_FINISH, getFinish } from "@/lib/finishes";
 import { formatLabel } from "@/lib/model-files";
@@ -66,6 +67,19 @@ export function ControlPanel() {
   const setMeshColor = useViewer((s) => s.setMeshColor);
   const animMode = useViewer((s) => s.animMode);
   const setAnimMode = useViewer((s) => s.setAnimMode);
+  const projection = useViewer((s) => s.projection);
+  const setProjection = useViewer((s) => s.setProjection);
+  const lensId = useViewer((s) => s.lensId);
+  const setLens = useViewer((s) => s.setLens);
+  const fileClips = useViewer((s) => s.fileClips);
+  const clipIndex = useViewer((s) => s.clipIndex);
+  const clipPlaying = useViewer((s) => s.clipPlaying);
+  const clipLoop = useViewer((s) => s.clipLoop);
+  const clipSpeed = useViewer((s) => s.clipSpeed);
+  const setClipIndex = useViewer((s) => s.setClipIndex);
+  const setClipPlaying = useViewer((s) => s.setClipPlaying);
+  const setClipLoop = useViewer((s) => s.setClipLoop);
+  const setClipSpeed = useViewer((s) => s.setClipSpeed);
   const resetCamera = useViewer((s) => s.resetCamera);
   const requestCapture = useViewer((s) => s.requestCapture);
   const captureFormat = useViewer((s) => s.captureFormat);
@@ -193,6 +207,71 @@ export function ControlPanel() {
           ))}
         </div>
       </div>
+
+      {fileClips.length > 0 ? (
+        <>
+          <Separator />
+          <div>
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 className="text-sm font-medium">Animación del archivo</h2>
+              <p className="text-xs text-muted-foreground">
+                {fileClips[clipIndex]?.name ?? "Clip"}
+                {fileClips[clipIndex] ? ` · ${fileClips[clipIndex].duration.toFixed(1)} s` : ""}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-1 rounded-lg bg-background p-1">
+              {fileClips.map((clip, index) => (
+                <button
+                  key={`${clip.name}-${index}`}
+                  type="button"
+                  title={clip.name}
+                  onClick={() => setClipIndex(index)}
+                  className={cn(
+                    "h-9 truncate rounded-md px-2 text-xs font-medium",
+                    clipIndex === index
+                      ? "bg-card text-foreground shadow-border"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {clip.name}
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-1 rounded-lg bg-background p-1">
+              <button
+                type="button"
+                onClick={() => setClipPlaying(!clipPlaying)}
+                className={cn(
+                  "h-9 rounded-md text-xs font-medium",
+                  clipPlaying ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
+                )}
+              >
+                {clipPlaying ? "Pausa" : "Reproducir"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setClipLoop(!clipLoop)}
+                className={cn(
+                  "h-9 rounded-md text-xs font-medium",
+                  clipLoop ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
+                )}
+              >
+                {clipLoop ? "Bucle" : "Una vez"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setClipSpeed(clipSpeed === 0.5 ? 1 : clipSpeed === 1 ? 2 : 0.5)}
+                className="h-9 rounded-md text-xs font-medium text-muted-foreground"
+              >
+                {clipSpeed === 0.5 ? "0.5×" : clipSpeed === 2 ? "2×" : "1×"}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-subtle text-pretty">
+              Esta animación viene dentro del GLB o FBX. El plato de arriba sigue aparte.
+            </p>
+          </div>
+        </>
+      ) : null}
 
       <Separator />
 
@@ -354,6 +433,62 @@ export function ControlPanel() {
             />
           </div>
         </Field>
+        <div>
+          <div className="mb-2 flex items-baseline justify-between">
+            <h2 className="text-sm font-medium">Cámara</h2>
+            <p className="text-xs text-muted-foreground">
+              {projection === "ortho" ? "Ortogonal" : LENSES.find((lens) => lens.id === lensId)?.label}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-1 rounded-lg bg-background p-1">
+            {(
+              [
+                ["perspective", "Perspectiva"],
+                ["ortho", "Ortogonal"],
+              ] as [Projection, string][]
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setProjection(id)}
+                className={cn(
+                  "h-9 rounded-md text-xs font-medium",
+                  projection === id ? "bg-card text-foreground shadow-border" : "text-muted-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div
+            className={cn(
+              "mt-2 grid grid-cols-3 gap-1 rounded-lg bg-background p-1",
+              projection === "ortho" && "pointer-events-none opacity-40",
+            )}
+          >
+            {LENSES.map((lens) => (
+              <button
+                key={lens.id}
+                type="button"
+                title={lens.note}
+                onClick={() => setLens(lens.id as LensId)}
+                className={cn(
+                  "h-9 rounded-md text-xs font-medium",
+                  lensId === lens.id && projection === "perspective"
+                    ? "bg-card text-foreground shadow-border"
+                    : "text-muted-foreground",
+                )}
+              >
+                {lens.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-subtle text-pretty">
+            {projection === "ortho"
+              ? "Ortogonal: las paralelas no se juntan. El zoom sigue igual."
+              : "Lentes de fotograma completo, sensor de 24 mm. Ojo de pez es un 8 mm."}
+          </p>
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" onClick={resetCamera}>
             <RotateCcw className="size-4" aria-hidden="true" />

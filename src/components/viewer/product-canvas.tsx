@@ -1,10 +1,11 @@
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, GizmoHelper, GizmoViewport, AdaptiveDpr } from "@react-three/drei";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
-import { CAMERA, VIEW_DIRS, distanceToZoom, viewSpan, zoomToDistance } from "@/lib/camera";
+import { CAMERA, lensById, verticalFov, VIEW_DIRS, distanceToZoom, viewSpan, zoomToDistance } from "@/lib/camera";
 import { useViewer } from "@/lib/viewer-store";
 import { CaptureBridge } from "./capture-bridge";
+import { ClipPlayer } from "./clip-player";
 import { ExplodeApplier } from "./explode-applier";
 import { ExportBridge } from "./export-bridge";
 import { InspectSync } from "./inspect-sync";
@@ -19,13 +20,14 @@ type ControlsHandle = {
 };
 
 function applyDistance(controls: ControlsHandle, zoom: number, frame: number) {
-  const cam = controls.object;
+  const cam = controls.object as THREE.PerspectiveCamera;
   const dist = zoomToDistance(zoom, frame);
   const dir = new THREE.Vector3().subVectors(cam.position, controls.target);
   if (dir.lengthSq() < 1e-6) dir.set(CAMERA.position[0], CAMERA.position[1], CAMERA.position[2]);
   dir.setLength(dist);
   cam.position.copy(controls.target).add(dir);
   controls.update();
+  if (useViewer.getState().projection === "ortho") cam.updateProjectionMatrix();
 }
 
 function applyView(controls: ControlsHandle, face: keyof typeof VIEW_DIRS, zoom: number, frame: number) {
@@ -34,7 +36,12 @@ function applyView(controls: ControlsHandle, face: keyof typeof VIEW_DIRS, zoom:
   controls.target.set(...CAMERA.target);
   controls.object.position.copy(controls.target).add(dir);
   controls.update();
+  if (useViewer.getState().projection === "ortho") {
+    (controls.object as THREE.PerspectiveCamera).updateProjectionMatrix();
+  }
 }
+
+const _orthoTarget = new THREE.Vector3(...CAMERA.target);
 
 function CameraRig({ controlsRef }: { controlsRef: RefObject<ControlsHandle | null> }) {
   const zoom = useViewer((s) => s.zoom);
@@ -43,7 +50,45 @@ function CameraRig({ controlsRef }: { controlsRef: RefObject<ControlsHandle | nu
   const viewFace = useViewer((s) => s.viewFace);
   const viewToken = useViewer((s) => s.viewToken);
   const setZoom = useViewer((s) => s.setZoom);
-  const { gl } = useThree();
+  const projection = useViewer((s) => s.projection);
+  const lensId = useViewer((s) => s.lensId);
+  const { gl, camera } = useThree();
+
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    const stock = THREE.PerspectiveCamera.prototype.updateProjectionMatrix;
+    cam.updateProjectionMatrix = function updateProjectionMatrix() {
+      if (useViewer.getState().projection !== "ortho") {
+        stock.call(this);
+        return;
+      }
+      const target = _orthoTarget;
+      const dist = Math.max(0.2, this.position.distanceTo(target));
+      const halfH = Math.tan(THREE.MathUtils.degToRad(CAMERA.fov) / 2) * dist;
+      const halfW = halfH * (this.aspect || 1);
+      this.projectionMatrix.makeOrthographic(-halfW, halfW, halfH, -halfH, 0.01, 80);
+      this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
+    };
+    return () => {
+      cam.updateProjectionMatrix = stock;
+    };
+  }, [camera]);
+
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    if (projection === "perspective") {
+      cam.fov = verticalFov(lensById(lensId).mm);
+      cam.near = 0.1;
+      cam.far = 40;
+    }
+    cam.updateProjectionMatrix();
+  }, [camera, projection, lensId]);
+
+  useFrame(() => {
+    if (useViewer.getState().projection === "ortho") {
+      (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+    }
+  });
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -99,6 +144,7 @@ function Stage() {
       <AdaptiveDpr />
       <StudioScene productRef={productRef} />
       <ModelAnimator rootRef={productRef} />
+      <ClipPlayer rootRef={productRef} />
       <ExplodeApplier rootRef={productRef} />
       <InspectSync rootRef={productRef} />
       <CaptureBridge />
